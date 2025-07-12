@@ -49,18 +49,19 @@ class CardService {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      final cardData = {
+      final data = {
         // 'id': card.id,
         'deck_id': card.deckId,
         'front': card.front,
         'back': card.back,
+        'description': card.description,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       };
 
       final response = await _supabase
           .from('cards')
-          .insert(cardData)
+          .insert(data)
           .select()
           .single();
 
@@ -89,6 +90,7 @@ class CardService {
               'deck_id': deckId,
               'front': card.front,
               'back': card.back,
+              'description': card.description,
               'created_at': DateTime.now().toIso8601String(),
               'updated_at': DateTime.now().toIso8601String(),
             },
@@ -115,6 +117,7 @@ class CardService {
           .update({
             'front': card.front,
             'back': card.back,
+            'description': card.description,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', card.id);

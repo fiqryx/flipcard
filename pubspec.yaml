@@ -1,7 +1,7 @@
 name: flipcard
-description: "A new Flutter project."
+description: "A modern learning companion for effective memorization."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1
 
 environment:
   sdk: ^3.8.1

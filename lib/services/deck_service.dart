@@ -15,25 +15,33 @@ class DeckService {
       // Load decks with their cards using a join
       final response = await _supabase
           .from('decks')
-          .select('''*, cards (id,deck_id,front,back,created_at,updated_at)''')
+          .select('''*, cards (*)''')
           .eq('user_id', user.id)
           .order('created_at', ascending: false);
 
       return response.map((deck) {
         // Convert cards array to the format expected by Deck.fromJson
         final cards =
-            (deck['cards'] as List?)?.map((card) {
-              return {
-                'id': card['id'] as String,
-                'deck_id': card['deck_id'] as String,
-                'front': card['front'] as String,
-                'back': card['back'] as String,
-                'is_flipped': false,
-                'created_at': card['created_at'] as String,
-                'updated_at': card['updated_at'] as String,
-              };
-            }).toList() ??
-            [];
+            ((deck['cards'] as List?)?.map((card) {
+                    return {
+                      'id': card['id'] as String,
+                      'deck_id': card['deck_id'] as String,
+                      'front': card['front'] as String,
+                      'back': card['back'] as String,
+                      'description': card['description'] as String?,
+                      'created_at': card['created_at'] as String,
+                      'updated_at': card['updated_at'] as String,
+                      '_parsed_created_at': DateTime.parse(
+                        card['created_at'] as String, // Parse for sorting
+                      ),
+                    };
+                  }).toList() ??
+                  [])
+              ..sort(
+                (a, b) => (a['_parsed_created_at'] as DateTime).compareTo(
+                  b['_parsed_created_at'] as DateTime,
+                ),
+              );
 
         // Create deck data with cards
         final deckJson = {
@@ -76,6 +84,7 @@ class DeckService {
                   'id': card['id'],
                   'front': card['front'],
                   'back': card['back'],
+                  'description': card['description'],
                 },
               )
               .toList() ??

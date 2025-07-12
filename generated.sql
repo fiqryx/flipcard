@@ -31,6 +31,7 @@ CREATE TABLE public.cards (
   deck_id uuid,
   front text NOT NULL,
   back text NOT NULL,
+  description text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT cards_pkey PRIMARY KEY (id),
