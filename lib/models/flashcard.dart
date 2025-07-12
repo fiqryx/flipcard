@@ -5,6 +5,7 @@ class FlashCard {
   String deckId;
   String front;
   String back;
+  String? description;
   bool isFlipped;
   DateTime createdAt;
   DateTime updatedAt;
@@ -14,6 +15,7 @@ class FlashCard {
     required this.deckId,
     required this.front,
     required this.back,
+    this.description,
     this.isFlipped = false,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -26,6 +28,7 @@ class FlashCard {
     'deck_id': deckId,
     'front': front,
     'back': back,
+    'description': description,
     'is_flipped': isFlipped,
     'created_at': createdAt.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
@@ -36,6 +39,7 @@ class FlashCard {
     deckId: json['deck_id'] as String,
     front: json['front'] as String,
     back: json['back'] as String,
+    description: json['description'],
     isFlipped: json['is_flipped'] as bool? ?? false,
     createdAt: DateTime.parse(json['created_at'] as String),
     updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -46,6 +50,7 @@ class FlashCard {
     String? deckId,
     String? front,
     String? back,
+    String? description,
     bool? isFlipped,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -55,6 +60,7 @@ class FlashCard {
       deckId: deckId ?? this.deckId,
       front: front ?? this.front,
       back: back ?? this.back,
+      description: description ?? this.description,
       isFlipped: isFlipped ?? this.isFlipped,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
@@ -63,6 +69,6 @@ class FlashCard {
 
   @override
   String toString() {
-    return "FlashCard(id: $id, deckId: $deckId, front: $front, back: $back, isFlipped: ${isFlipped.toString()}, createdAt: ${createdAt.toIso8601String()}, updatedAt: ${updatedAt.toIso8601String()})";
+    return "FlashCard(id: $id, deckId: $deckId, front: $front, back: $back, description: $description, isFlipped: ${isFlipped.toString()}, createdAt: ${createdAt.toIso8601String()}, updatedAt: ${updatedAt.toIso8601String()})";
   }
 }

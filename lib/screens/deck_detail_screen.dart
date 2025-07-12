@@ -27,23 +27,17 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
   }
 
   Future<void> _addCard() async {
-    final result = await showModalBottomSheet<FlashCard?>(
+    final result = await showFSheet<FlashCard?>(
       context: context,
-      isScrollControlled: true,
+      side: FLayout.btt,
       builder: (context) => _CardEditSheet(
-        onSave: (front, back) =>
-            FlashCard(deckId: widget.deck.id, front: front, back: back),
+        label: 'Create Card',
+        card: FlashCard(deckId: widget.deck.id, front: '', back: ''),
       ),
     );
 
     if (result != null) {
-      final card = await CardService.create(
-        FlashCard(
-          deckId: widget.deck.id,
-          back: result.back,
-          front: result.front,
-        ),
-      );
+      final card = await CardService.create(result);
 
       setState(() {
         widget.deck.cards.add(card);
@@ -57,10 +51,7 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
       context: context,
       side: FLayout.btt,
       mainAxisMaxRatio: null,
-      builder: (context) => _CardEditSheet(
-        card: card,
-        onSave: (front, back) => card.copyWith(front: front, back: back),
-      ),
+      builder: (context) => _CardEditSheet(label: 'Edit Card', card: card),
     );
 
     if (result != null) {
@@ -122,6 +113,7 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: context.theme.colors.background,
       builder: (context) => _DeckSettings(
         deck: widget.deck,
         onSave: (deck) async {
@@ -292,7 +284,6 @@ class _FlashCardItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
-    final themeOf = Theme.of(context);
 
     return Card(
       elevation: 0,
@@ -308,12 +299,15 @@ class _FlashCardItem extends StatelessWidget {
         collapsedShape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
-        title: Text(
-          card.front,
-          style: themeOf.textTheme.titleMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(card.front, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: card.description != null
+            ? Text(
+                card.description!,
+                style: theme.typography.sm.copyWith(
+                  color: colors.mutedForeground,
+                ),
+              )
+            : null,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -324,13 +318,13 @@ class _FlashCardItem extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Answer :',
-                  style: themeOf.textTheme.bodySmall?.copyWith(
-                    color: colors.mutedForeground.withValues(alpha: 0.8),
+                  style: theme.typography.sm.copyWith(
+                    color: colors.mutedForeground,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(card.back, style: themeOf.textTheme.bodyLarge),
+                Text(card.back),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -359,95 +353,144 @@ class _FlashCardItem extends StatelessWidget {
 }
 
 class _CardEditSheet extends StatefulWidget {
-  final FlashCard? card;
-  final FlashCard Function(String front, String back) onSave;
+  final String label;
+  final FlashCard card;
 
-  const _CardEditSheet({required this.onSave, this.card});
+  const _CardEditSheet({required this.label, required this.card});
 
   @override
   State<_CardEditSheet> createState() => _CardEditSheetState();
 }
 
 class _CardEditSheetState extends State<_CardEditSheet> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   late final TextEditingController _frontController;
   late final TextEditingController _backController;
+  late final TextEditingController _descriptionController;
 
   @override
   void initState() {
     super.initState();
-    _frontController = TextEditingController(text: widget.card?.front);
-    _backController = TextEditingController(text: widget.card?.back);
+    _frontController = TextEditingController(text: widget.card.front);
+    _backController = TextEditingController(text: widget.card.back);
+    _descriptionController = TextEditingController(
+      text: widget.card.description,
+    );
+  }
+
+  @override
+  void dispose() {
+    _frontController.dispose();
+    _backController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeOf = Theme.of(context);
-
+    final colors = context.theme.colors;
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: context.theme.colors.background),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.theme.colors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.card == null ? 'Add New Card' : 'Edit Card',
-            style: themeOf.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          FTextField(
-            hint: 'Question',
-            maxLines: 2,
-            autofocus: true,
-            controller: _frontController,
-          ),
-          const SizedBox(height: 16),
-          FTextField(controller: _backController, hint: 'Answer', maxLines: 3),
-          const SizedBox(height: 24),
-          Row(
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border.all(color: colors.border),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: FButton(
-                  onPress: () => Navigator.pop(context),
-                  style: FButtonStyle.outline(),
-                  child: const Text('Cancel'),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: context.theme.colors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: FButton(
-                  onPress: () {
-                    if (_frontController.text.isNotEmpty &&
-                        _backController.text.isNotEmpty) {
-                      Navigator.pop(
-                        context,
-                        widget.onSave(
-                          _frontController.text,
-                          _backController.text,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text('Save'),
+
+              // label
+              Text(
+                widget.label,
+                style: context.theme.typography.xl.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+
+              // question
+              const SizedBox(height: 24),
+              FTextFormField(
+                hint: 'Question',
+                maxLines: 2,
+                autofocus: true,
+                controller: _frontController,
+                validator: (value) => value != null && value.isNotEmpty
+                    ? null
+                    : 'Question is required',
+              ),
+
+              // answer
+              const SizedBox(height: 16),
+              FTextFormField(
+                controller: _backController,
+                hint: 'Answer',
+                maxLines: 2,
+                validator: (value) => value != null && value.isNotEmpty
+                    ? null
+                    : 'Answer is required',
+              ),
+
+              // description
+              const SizedBox(height: 16),
+              FTextFormField(
+                controller: _descriptionController,
+                hint: 'Description (optional)',
+                maxLines: 3,
+              ),
+
+              // actions
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: FButton(
+                      onPress: () => Navigator.pop(context),
+                      style: FButtonStyle.outline(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: FButton(
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: () {
+                        if (!_formKey.currentState!.validate()) return;
+                        Navigator.pop(
+                          context,
+                          widget.card.copyWith(
+                            front: _frontController.text,
+                            back: _backController.text,
+                            description: _descriptionController.text,
+                          ),
+                        );
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-        ],
+        ),
       ),
     );
   }
@@ -479,10 +522,14 @@ class _DeckSettingsState extends State<_DeckSettings> {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
-    final themeOf = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border.all(color: colors.border),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,16 +550,11 @@ class _DeckSettingsState extends State<_DeckSettings> {
           // Title
           Text(
             'Deck Settings',
-            style: themeOf.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: theme.typography.xl.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
           Text(
             'Configure speech recognition languages for this deck',
-            style: themeOf.textTheme.bodyMedium?.copyWith(
-              color: colors.mutedForeground,
-            ),
+            style: theme.typography.sm.copyWith(color: colors.mutedForeground),
           ),
           const SizedBox(height: 24),
 
@@ -653,6 +695,7 @@ class _LanguageSelector extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: context.theme.colors.background,
       builder: (context) => _LanguagePickerSheet(
         selectedLanguage: selectedLanguage,
         onLanguageSelected: onLanguageChanged,
@@ -687,6 +730,11 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border.all(color: colors.border),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+      ),
       child: Column(
         children: [
           // Handle bar

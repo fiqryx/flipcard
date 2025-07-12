@@ -232,6 +232,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
     // Prevent action during animation
     if (_isAnimating) return;
 
+    _speech.reset();
+
     if (wasCorrect) {
       setState(() => correctAnswers++);
     }
@@ -266,10 +268,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
     // Clear quiz state when completed normally
     QuizService.clearQuizState();
 
-    showModalBottomSheet(
+    showFSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      side: FLayout.btt,
       builder: (context) => _QuizResultSheet(
         totalCards: shuffledCards.length,
         correctAnswers: correctAnswers,
@@ -593,7 +594,7 @@ class _QuizResultSheet extends StatelessWidget {
                   ),
                   child: Text(
                     'Done',
-                    style: TextStyle(color: context.theme.colors.foreground),
+                    style: TextStyle(color: colors.foreground),
                   ),
                 ),
               ),
@@ -635,7 +636,13 @@ class _QuizAnswerComparison extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
-    final isCorrect = _similarity(spoken, correct);
+    final similarity = _countSimilarity(spoken, correct);
+    final isCorrect = similarity > 0.6;
+    final correctColor = similarity >= 0.9
+        ? Colors.green
+        : similarity > 0.6
+        ? Colors.orange
+        : Colors.red;
 
     return Container(
       margin: EdgeInsets.only(top: 24),
@@ -643,20 +650,30 @@ class _QuizAnswerComparison extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.background.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isCorrect ? Colors.green : Colors.red,
-          width: 2,
-        ),
+        border: Border.all(color: correctColor, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                isCorrect ? Icons.check_circle : Icons.cancel,
-                color: isCorrect ? Colors.green : Colors.red,
-                size: 24,
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: correctColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '${(similarity * 100).toInt()}%',
+                    style: TextStyle(
+                      color: colors.background,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
               SizedBox(width: 8),
               Text(
@@ -729,7 +746,7 @@ class _QuizAnswerComparison extends StatelessWidget {
   }
 
   /// count similarity
-  bool _similarity(String spoken, String correct) {
+  double _countSimilarity(String spoken, String correct) {
     // Remove common words and punctuation for better matching
     String cleanSpoken = spoken
         .replaceAll(RegExp(r'[^\w\s]'), '')
@@ -739,12 +756,12 @@ class _QuizAnswerComparison extends StatelessWidget {
         .toLowerCase();
 
     // Direct match
-    if (cleanSpoken == cleanCorrect) return true;
+    if (cleanSpoken == cleanCorrect) return 1;
 
     // Check if spoken answer contains the correct answer
     if (cleanSpoken.contains(cleanCorrect) ||
         cleanCorrect.contains(cleanSpoken)) {
-      return true;
+      return 1;
     }
 
     // Check if spoken answer contains key words from correct answer
@@ -754,7 +771,7 @@ class _QuizAnswerComparison extends StatelessWidget {
         .toList();
     List<String> spokenWords = cleanSpoken.split(' ');
 
-    if (correctWords.isEmpty) return false;
+    if (correctWords.isEmpty) return 0;
 
     // Calculate similarity based on word overlap
     int matchedWords = 0;
@@ -766,9 +783,7 @@ class _QuizAnswerComparison extends StatelessWidget {
       }
     }
 
-    // Consider it correct if more than 60% of important words match
-    double similarity = matchedWords / correctWords.length;
-    return similarity >= 0.6;
+    return matchedWords / correctWords.length;
   }
 
   /// calculate levenshtein distance
@@ -879,6 +894,18 @@ class _QuizCard extends StatelessWidget {
               ),
             ),
             if (!isFlipped) ...[
+              Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()..rotateY(!isFlipped ? 0 : pi),
+                child: Text(
+                  card.description ?? '',
+                  style: theme.typography.base.copyWith(
+                    color: colors.primaryForeground,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
               SizedBox(height: 24),
               if (isLoading) ...[
                 Column(

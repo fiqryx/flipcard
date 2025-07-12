@@ -313,6 +313,7 @@ class UserService {
     deck.cards.addAll(cards);
 
     await DeckService.saveMany([deck]);
+    await UserService.updateStats(totalDecks: 1, totalCards: deck.cards.length);
   }
 
   static Future<model.User?> _createWithRetry(
