@@ -10,6 +10,7 @@ class Deck {
   List<FlashCard> cards;
   Locale frontLanguage;
   Locale backLanguage;
+  bool shuffle;
   DateTime createdAt;
   DateTime updatedAt;
 
@@ -20,6 +21,7 @@ class Deck {
     required this.cards,
     this.frontLanguage = const Locale('en', 'US'),
     this.backLanguage = const Locale('en', 'US'),
+    this.shuffle = true,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : id = id ?? const Uuid().v4(),
@@ -34,6 +36,7 @@ class Deck {
     'front_language':
         '${frontLanguage.languageCode}-${frontLanguage.countryCode}',
     'back_language': '${backLanguage.languageCode}-${backLanguage.countryCode}',
+    'shuffle': shuffle,
     'created_at': createdAt.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
   };
@@ -53,6 +56,7 @@ class Deck {
           .toList(),
       frontLanguage: parseLocale(json['front_language'] as String? ?? 'en-US'),
       backLanguage: parseLocale(json['back_language'] as String? ?? 'en-US'),
+      shuffle: json['shuffle'] ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -65,6 +69,7 @@ class Deck {
     List<FlashCard>? cards,
     Locale? frontLanguage,
     Locale? backLanguage,
+    bool? shuffle,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -75,6 +80,7 @@ class Deck {
       cards: cards ?? this.cards,
       frontLanguage: frontLanguage ?? this.frontLanguage,
       backLanguage: backLanguage ?? this.backLanguage,
+      shuffle: shuffle ?? this.shuffle,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -82,6 +88,6 @@ class Deck {
 
   @override
   String toString() {
-    return "Deck(id: $id, name: $name, description: $description, cards: ${cards.length}, frontLanguage: $frontLanguage, backLanguage: $backLanguage, createdAt: ${createdAt.toIso8601String()}, updatedAt: ${updatedAt.toIso8601String()})";
+    return "Deck(id: $id, name: $name, description: $description, cards: ${cards.length}, frontLanguage: $frontLanguage, backLanguage: $backLanguage, shuffle: $shuffle, createdAt: ${createdAt.toIso8601String()}, updatedAt: ${updatedAt.toIso8601String()})";
   }
 }
