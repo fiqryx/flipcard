@@ -146,7 +146,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       correctAnswers = widget.resumeState!['correctAnswers'] as int;
     } else {
       // Start new quiz
-      shuffledCards = List.from(widget.deck.cards)..shuffle(Random());
+      shuffledCards = widget.deck.shuffle
+          ? (List.from(widget.deck.cards)..shuffle(Random()))
+          : widget.deck.cards;
       currentIndex = 0;
       correctAnswers = 0;
 

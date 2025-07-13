@@ -134,10 +134,7 @@ class DeckService {
       // Upsert the deck
       await _supabase.from('decks').upsert(deckJson, onConflict: 'id');
 
-      // Delete existing cards for this deck
-      await _supabase.from('cards').delete().eq('deck_id', deck.id);
-
-      // Insert new cards if any exist
+      // Upsert cards
       if (cards.isNotEmpty) {
         final cardsData = cards
             .map(
@@ -146,13 +143,16 @@ class DeckService {
                 'deck_id': deck.id,
                 'front': card['front'],
                 'back': card['back'],
-                'created_at': DateTime.now().toIso8601String(),
-                'updated_at': DateTime.now().toIso8601String(),
+                'description': card['description'],
+                'created_at':
+                    card['created_at'] ?? DateTime.now().toIso8601String(),
+                'updated_at':
+                    card['updated_at'] ?? DateTime.now().toIso8601String(),
               },
             )
             .toList();
 
-        await _supabase.from('cards').insert(cardsData);
+        await _supabase.from('cards').upsert(cardsData, onConflict: 'id');
       }
     } catch (e) {
       log('Error saving deck: $e', name: "DeckService");

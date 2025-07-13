@@ -30,6 +30,7 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
     final result = await showFSheet<FlashCard?>(
       context: context,
       side: FLayout.btt,
+      mainAxisMaxRatio: null,
       builder: (context) => _CardEditSheet(
         label: 'Create Card',
         card: FlashCard(deckId: widget.deck.id, front: '', back: ''),
@@ -110,10 +111,10 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
   }
 
   Future<void> _showDeckSettings() async {
-    await showModalBottomSheet(
+    await showFSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: context.theme.colors.background,
+      side: FLayout.btt,
+      mainAxisMaxRatio: null,
       builder: (context) => _DeckSettings(
         deck: widget.deck,
         onSave: (deck) async {
@@ -122,6 +123,7 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
             // need fix 'widget.deck' with editable deck
             widget.deck.backLanguage = deck.backLanguage;
             widget.deck.frontLanguage = deck.frontLanguage;
+            widget.deck.shuffle = deck.shuffle;
           });
           await _userStore.addDeck(deck);
         },
@@ -507,14 +509,14 @@ class _DeckSettings extends StatefulWidget {
 }
 
 class _DeckSettingsState extends State<_DeckSettings> {
-  late String selectedFrontLanguage;
-  late String selectedBackLanguage;
+  late Language frontLanguage;
+  late Language backLanguage;
 
   @override
   void initState() {
     final deck = widget.deck;
-    selectedFrontLanguage = Language.findByLocale(deck.frontLanguage).code;
-    selectedBackLanguage = Language.findByLocale(deck.backLanguage).code;
+    frontLanguage = Language.findByLocale(deck.frontLanguage);
+    backLanguage = Language.findByLocale(deck.backLanguage);
     super.initState();
   }
 
@@ -553,34 +555,72 @@ class _DeckSettingsState extends State<_DeckSettings> {
             style: theme.typography.xl.copyWith(fontWeight: FontWeight.bold),
           ),
           Text(
-            'Configure speech recognition languages for this deck',
+            'Configure study behavior and deck rules', // change this
             style: theme.typography.sm.copyWith(color: colors.mutedForeground),
           ),
           const SizedBox(height: 24),
 
-          // Front Language Setting
-          _LanguageSelector(
-            title: 'Front Card Language',
-            subtitle: 'Language for question/front side',
-            selectedLanguage: selectedFrontLanguage,
-            onLanguageChanged: (language) {
-              setState(() {
-                selectedFrontLanguage = language;
-              });
-            },
+          FTileGroup(
+            children: [
+              FTile(
+                title: Text('Shuffle Mode'),
+                subtitle: Text('Randomize card order during quizzes'),
+                suffix: FSwitch(
+                  value: widget.deck.shuffle,
+                  onChange: (value) {
+                    widget.onSave(widget.deck.copyWith(shuffle: value));
+                    setState(() {});
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
-          // Back Language Setting
-          _LanguageSelector(
-            title: 'Back Card Language',
-            subtitle: 'Language for answer/back side',
-            selectedLanguage: selectedBackLanguage,
-            onLanguageChanged: (language) {
-              setState(() {
-                selectedBackLanguage = language;
-              });
-            },
+          // Languages
+          FTileGroup(
+            label: const Text('Language'),
+            description: const Text('Configure speech recognition languages'),
+            divider: FItemDivider.full,
+            children: [
+              // Front Language
+              FTile(
+                onPress: () => _showLanguagePicker(
+                  context: context,
+                  selected: frontLanguage.code,
+                  onChanged: (value) => setState(() => frontLanguage = value),
+                ),
+                prefix: Text(
+                  frontLanguage.flag,
+                  style: const TextStyle(fontSize: 20),
+                ),
+                title: Text(frontLanguage.name),
+                subtitle: Text('Front Card'),
+                suffix: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: colors.mutedForeground,
+                ),
+              ),
+
+              // Back Language
+              FTile(
+                onPress: () => _showLanguagePicker(
+                  context: context,
+                  selected: backLanguage.code,
+                  onChanged: (value) => setState(() => backLanguage = value),
+                ),
+                prefix: Text(
+                  backLanguage.flag,
+                  style: const TextStyle(fontSize: 20),
+                ),
+                title: Text(backLanguage.name),
+                subtitle: Text('Back Card'),
+                suffix: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: colors.mutedForeground,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
 
@@ -599,8 +639,8 @@ class _DeckSettingsState extends State<_DeckSettings> {
                 child: FButton(
                   onPress: () {
                     final updatedDeck = widget.deck.copyWith(
-                      frontLanguage: _parseLocale(selectedFrontLanguage),
-                      backLanguage: _parseLocale(selectedBackLanguage),
+                      frontLanguage: _parseLocale(frontLanguage.code),
+                      backLanguage: _parseLocale(backLanguage.code),
                     );
                     widget.onSave(updatedDeck);
                     Navigator.pop(context);
@@ -620,85 +660,19 @@ class _DeckSettingsState extends State<_DeckSettings> {
     final parts = localeString.split('-');
     return Locale(parts[0], parts.length > 1 ? parts[1] : null);
   }
-}
 
-class _LanguageSelector extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String selectedLanguage;
-  final Function(String) onLanguageChanged;
-
-  const _LanguageSelector({
-    required this.title,
-    required this.subtitle,
-    required this.selectedLanguage,
-    required this.onLanguageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = context.theme;
-    final colors = theme.colors;
-    final themeOf = Theme.of(context);
-    final selectedLang = Language.findByCode(selectedLanguage);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: themeOf.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: themeOf.textTheme.bodySmall?.copyWith(
-            color: colors.mutedForeground,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: () => _showLanguagePicker(context),
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.background,
-              border: Border.all(color: colors.border),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  selectedLang?.flag ?? '🌐',
-                  style: const TextStyle(fontSize: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    selectedLang?.name ?? 'Unknown',
-                    style: themeOf.textTheme.bodyMedium,
-                  ),
-                ),
-                Icon(Icons.keyboard_arrow_down, color: colors.mutedForeground),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showLanguagePicker(BuildContext context) {
-    showModalBottomSheet(
+  void _showLanguagePicker({
+    required BuildContext context,
+    required String selected,
+    required Function(Language) onChanged,
+  }) {
+    showFSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: context.theme.colors.background,
+      side: FLayout.btt,
+      mainAxisMaxRatio: null,
       builder: (context) => _LanguagePickerSheet(
-        selectedLanguage: selectedLanguage,
-        onLanguageSelected: onLanguageChanged,
+        selectedLanguage: selected,
+        onLanguageSelected: onChanged,
       ),
     );
   }
@@ -706,7 +680,7 @@ class _LanguageSelector extends StatelessWidget {
 
 class _LanguagePickerSheet extends StatefulWidget {
   final String selectedLanguage;
-  final Function(String) onLanguageSelected;
+  final Function(Language) onLanguageSelected;
 
   const _LanguagePickerSheet({
     required this.selectedLanguage,
@@ -725,7 +699,6 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
-    final themeOf = Theme.of(context);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -743,7 +716,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
             height: 4,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2),
-              color: context.theme.colors.border,
+              color: colors.border,
             ),
           ),
           const SizedBox(height: 16),
@@ -751,9 +724,7 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
           // Title
           Text(
             'Select Language',
-            style: themeOf.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: theme.typography.lg.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
 
@@ -777,20 +748,21 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
 
           // Language list
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredLanguages.length,
-              itemBuilder: (context, index) {
+            child: FTileGroup.builder(
+              divider: FItemDivider.none,
+              count: filteredLanguages.length,
+              tileBuilder: (context, index) {
                 final language = filteredLanguages[index];
                 final isSelected = language.code == widget.selectedLanguage;
 
-                return ListTile(
-                  leading: Text(
+                return FTile(
+                  prefix: Text(
                     language.flag,
                     style: const TextStyle(fontSize: 20),
                   ),
                   title: Text(
                     language.name,
-                    style: themeOf.textTheme.bodyMedium?.copyWith(
+                    style: theme.typography.base.copyWith(
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -798,15 +770,15 @@ class _LanguagePickerSheetState extends State<_LanguagePickerSheet> {
                   ),
                   subtitle: Text(
                     language.code,
-                    style: themeOf.textTheme.bodySmall?.copyWith(
+                    style: theme.typography.sm.copyWith(
                       color: colors.mutedForeground,
                     ),
                   ),
-                  trailing: isSelected
+                  suffix: isSelected
                       ? Icon(Icons.check_circle, color: colors.primary)
                       : null,
-                  onTap: () {
-                    widget.onLanguageSelected(language.code);
+                  onPress: () {
+                    widget.onLanguageSelected(language);
                     Navigator.pop(context);
                   },
                 );

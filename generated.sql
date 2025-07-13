@@ -6,6 +6,7 @@ create table public.user_profiles (
    image_url   text,
    total_decks integer default 0,
    total_cards integer default 0,
+   shuffle boolean not null default true,
    created_at  timestamp with time zone default now(),
    updated_at  timestamp with time zone default now(),
    constraint user_profiles_pkey primary key ( id ),
