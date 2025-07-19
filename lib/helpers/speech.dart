@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'dart:developer';
+import 'package:flipcard/constants/enums.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flipcard/models/voicer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
-enum TtsState { playing, stopped, paused, continued }
 
 class Speech with ChangeNotifier {
   final FlutterTts _tts = FlutterTts();

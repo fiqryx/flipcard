@@ -1,16 +1,5 @@
+import 'package:flipcard/constants/enums.dart';
 import 'package:flutter/material.dart';
-
-enum TimePeriod {
-  weeks4(28, 'Last 4 weeks'),
-  weeks12(84, 'Last 12 weeks'),
-  months3(90, 'Last 3 months'),
-  months6(180, 'Last 6 months');
-  // year1(365, 'Last year');
-
-  const TimePeriod(this.days, this.displayName);
-  final int days;
-  final String displayName;
-}
 
 class LayoutParams {
   final double labelWidth;
@@ -42,6 +31,54 @@ class Day {
   Day({required this.date, required this.count, required this.intensity});
 }
 
+class DayLabels extends CustomPainter {
+  final dynamic theme;
+  final double cellSize;
+  final double monthLabelHeight;
+
+  DayLabels({
+    required this.theme,
+    required this.cellSize,
+    required this.monthLabelHeight,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    // final dayLabels = ['Sun', 'Mon', 'Tue', 'Wen', 'Thu', 'Fri', 'Sat'];
+
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
+    );
+
+    const cellPadding = 2.0;
+    final totalCellSize = cellSize + cellPadding;
+    final startY = monthLabelHeight;
+
+    for (int day = 0; day < 7; day++) {
+      textPainter.text = TextSpan(
+        text: dayLabels[day],
+        style: TextStyle(
+          fontSize: (cellSize * 0.6).clamp(8.0, 12.0),
+          color: theme.colors.mutedForeground,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(
+          10, // Fixed position for day labels
+          startY + day * totalCellSize + (cellSize - textPainter.height) / 2,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class Heatmap extends CustomPainter {
   final List<Day> data;
   final dynamic theme;
@@ -59,7 +96,7 @@ class Heatmap extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (data.isEmpty) return;
 
-    // Calculate layout parameters based on time period
+    // Calculate layout parameters
     final layoutParams = _calculateLayoutParams(size, cellSize);
 
     // Draw month labels for longer periods
@@ -67,22 +104,18 @@ class Heatmap extends CustomPainter {
       _drawMonthLabels(canvas, size, layoutParams);
     }
 
-    // Draw day labels
-    _drawDayLabels(canvas, layoutParams);
-
-    // Draw heatmap cells
+    // Draw heatmap cells only (day labels are handled separately)
     _drawHeatmapCells(canvas, layoutParams);
   }
 
   LayoutParams _calculateLayoutParams(Size size, double cellSize) {
-    final labelWidth = 30.0;
+    final labelWidth =
+        0.0; // No label width since day labels are handled separately
     final monthLabelHeight = timePeriod.days > 84 ? 20.0 : 0.0;
-    final availableWidth = size.width - labelWidth;
     const cellPadding = 2.0;
     final totalCellSize = cellSize + cellPadding;
     final totalWeeks = (data.length / 7).ceil();
-    final totalWidth = totalWeeks * totalCellSize - cellPadding;
-    final startX = labelWidth + (availableWidth - totalWidth) / 2;
+    final startX = 0.0; // Start from the left edge
     final startY = monthLabelHeight;
 
     return LayoutParams(
@@ -103,8 +136,10 @@ class Heatmap extends CustomPainter {
       textAlign: TextAlign.center,
     );
 
-    // Group weeks by month
+    // Group weeks by month and track positions
     final monthPositions = <String, double>{};
+    final monthWeekCounts = <String, int>{};
+
     for (int i = 0; i < data.length; i += 7) {
       final weekDate = data[i].date;
       final monthKey = '${weekDate.year}-${weekDate.month}';
@@ -113,11 +148,13 @@ class Heatmap extends CustomPainter {
       if (!monthPositions.containsKey(monthKey)) {
         monthPositions[monthKey] =
             params.startX + weekIndex * params.totalCellSize;
+        monthWeekCounts[monthKey] = 0;
       }
+      monthWeekCounts[monthKey] = monthWeekCounts[monthKey]! + 1;
     }
 
-    // Draw month labels
-    monthPositions.forEach((monthKey, x) {
+    // Draw month labels centered over their weeks
+    monthPositions.forEach((monthKey, startX) {
       final parts = monthKey.split('-');
       final month = int.parse(parts[1]);
       final monthNames = [
@@ -135,41 +172,17 @@ class Heatmap extends CustomPainter {
         'Dec',
       ];
 
+      final weekCount = monthWeekCounts[monthKey]!;
+      final monthWidth = weekCount * params.totalCellSize - params.cellPadding;
+      final centerX = startX + monthWidth / 2;
+
       textPainter.text = TextSpan(
         text: monthNames[month - 1],
         style: TextStyle(fontSize: 10, color: theme.colors.mutedForeground),
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(x, 0));
+      textPainter.paint(canvas, Offset(centerX - textPainter.width / 2, 0));
     });
-  }
-
-  void _drawDayLabels(Canvas canvas, LayoutParams params) {
-    final dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-      textAlign: TextAlign.center,
-    );
-
-    for (int day = 0; day < 7; day++) {
-      textPainter.text = TextSpan(
-        text: dayLabels[day],
-        style: TextStyle(
-          fontSize: (params.cellSize * 0.6).clamp(8.0, 12.0),
-          color: theme.colors.mutedForeground,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(
-          params.startX - 20,
-          params.startY +
-              day * params.totalCellSize +
-              (params.cellSize - textPainter.height) / 2,
-        ),
-      );
-    }
   }
 
   void _drawHeatmapCells(Canvas canvas, LayoutParams params) {

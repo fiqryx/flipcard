@@ -240,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 TextButton(
                   onPressed: () => {
-                    Navigator.of(context).pushReplacementNamed('/register'),
+                    Navigator.of(context).pushNamed('/register'),
                   },
                   child: Text(
                     'Sign Up',
@@ -296,9 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ignore: unused_element
   Future<void> _nativeGoogleSignIn() async {
-    // For Android, you only need the serverClientId (Web Client ID)
-    const webClientId =
-        'YOUR_WEB_CLIENT_ID.googleusercontent.com'; // Replace with your web client ID
+    const webClientId = 'YOUR_WEB_CLIENT_ID.googleusercontent.com';
 
     final GoogleSignIn googleSignIn = GoogleSignIn(
       serverClientId: webClientId,
@@ -339,8 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _webGoogleSignIn() async {
     await Supabase.instance.client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo:
-          'your-app://login-callback', // Replace with your app's deep link
+      redirectTo: 'com.example.flipcard://login-callback',
     );
   }
 
@@ -353,8 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(
         _emailController.text.trim(),
-        redirectTo:
-            'your-app://reset-password', // Replace with your app's deep link
+        redirectTo: 'com.example.flipcard://reset-password',
       );
       _showSuccess('Password reset link sent to your email');
     } on AuthException catch (error) {

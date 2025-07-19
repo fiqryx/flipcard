@@ -9,7 +9,6 @@ import 'package:forui/forui.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:uuid/uuid.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -29,9 +28,21 @@ class _MenuScreen extends State<MenuScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    await _userStore.getData();
-    if (mounted) setState(() => _isLoading = false);
+    try {
+      setState(() => _isLoading = true);
+      await _userStore.getData();
+    } catch (e) {
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: Icon(FIcons.circleX),
+          title: Text(e.toString().replaceAll('Exception: ', '')),
+          alignment: FToastAlignment.bottomCenter,
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _exportDeck(BuildContext context, Deck deck) async {
@@ -94,15 +105,14 @@ class _MenuScreen extends State<MenuScreen> {
 
       // Generate new IDs and preserve original data
       final importedDeck = Deck(
-        id: const Uuid().v4(), // New deck ID
         name: deckJson['name'] as String,
         description: deckJson['description'] as String? ?? '',
         cards: (deckJson['cards'] as List).map((card) {
           return FlashCard(
-            id: const Uuid().v4(), // New card ID
             deckId: '',
             front: card['front'] as String? ?? '',
             back: card['back'] as String? ?? '',
+            description: card['description'] as String? ?? '',
             isFlipped: false,
           );
         }).toList(),
@@ -159,14 +169,6 @@ class _MenuScreen extends State<MenuScreen> {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Import/Export',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator.adaptive(

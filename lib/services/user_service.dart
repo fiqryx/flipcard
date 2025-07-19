@@ -18,6 +18,9 @@ class UserService {
 
   static String? get currentUserEmail => _supabase.auth.currentUser?.email;
 
+  static String? get provider =>
+      _supabase.auth.currentUser?.appMetadata['provider'];
+
   static Future<model.User?> getById() async {
     try {
       final authUser = _supabase.auth.currentUser;
@@ -73,6 +76,9 @@ class UserService {
         'name': profile.name,
         'email': authUser.email,
         'image_url': profile.imageUrl,
+        'gender': profile.gender,
+        'phone': profile.phone,
+        'birth_date': profile.birthDate?.toIso8601String(),
         'total_decks': profile.totalDecks,
         'total_cards': profile.totalCards,
         'updated_at': DateTime.now().toIso8601String(),
@@ -87,7 +93,10 @@ class UserService {
   }
 
   /// return public URL uploaded file
-  static Future<String?> uploadImage(File imageFile) async {
+  static Future<String?> uploadImage(
+    File imageFile, {
+    String? currentImageUrl,
+  }) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
@@ -95,6 +104,20 @@ class UserService {
       final bucketId = 'user-profiles';
       final name = '${user.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final path = 'profile_images/$name';
+
+      if (currentImageUrl != null && currentImageUrl.isNotEmpty) {
+        final oldFileName = currentImageUrl.split('/').last;
+        _supabase.storage.from(bucketId).remove(['profile_images/$oldFileName'])
+        // ignore: body_might_complete_normally_catch_error
+        .catchError((err, stackTrace) {
+          dev.log(
+            'Error remove previous profile image',
+            name: "UserService",
+            error: err,
+            stackTrace: stackTrace,
+          );
+        });
+      }
 
       await _supabase.storage.from(bucketId).upload(path, imageFile);
 
@@ -219,13 +242,19 @@ class UserService {
 
   static Future<model.User?> _create(User authUser) async {
     try {
+      final metadata = authUser.userMetadata ?? {};
+      final emailPrefix = authUser.email?.split('@').first;
+
+      dev.log(metadata.toString());
+
       final userData = {
         'user_id': authUser.id,
-        'name':
-            authUser.userMetadata?['name'] ??
-            authUser.email?.split('@')[0] ??
-            'User',
+        'name': metadata['name'] ?? emailPrefix ?? 'User',
         'email': authUser.email,
+        'image_url': metadata['avatar_url'],
+        'gender': metadata['gender'],
+        'phone': metadata['phone'] ?? authUser.phone,
+        'birth_date': metadata['birth_date'],
         'total_decks': 0,
         'total_cards': 0,
         'created_at': DateTime.now().toIso8601String(),

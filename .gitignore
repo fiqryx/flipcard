@@ -1,8 +1,10 @@
 # Miscellaneous
+*.sh
 *.class
 *.log
 *.pyc
 *.swp
+*.json
 .DS_Store
 .atom/
 .build/

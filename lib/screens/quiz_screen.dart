@@ -3,6 +3,8 @@ import 'package:flipcard/models/quiz_result.dart';
 import 'package:flipcard/screens/quiz_play_screen.dart';
 import 'package:flipcard/services/quiz_result_service.dart';
 import 'package:flipcard/services/user_service.dart';
+import 'package:flipcard/widgets/app_bar.dart';
+import 'package:flipcard/widgets/badge.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -51,11 +53,13 @@ class _QuizScreen extends State<QuizScreen> {
     final shuffledCardsData = quizState['shuffledCards'] as List? ?? [];
     final totalCards = shuffledCardsData.length;
 
-    showDialog(
+    showFDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _QuizContinueDialog(
+      builder: (context, style, animation) => _QuizContinueDialog(
         name: deckName,
+        style: style,
+        animation: animation,
         progress: '${currentIndex + 1}/$totalCards',
         onContinue: () async => await _continuePreviousQuiz(quizState),
       ),
@@ -145,69 +149,90 @@ class _QuizScreen extends State<QuizScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    await _userStore.getData();
-    if (mounted) setState(() => _isLoading = false);
+    try {
+      setState(() => _isLoading = true);
+      await _userStore.getData();
+    } catch (e) {
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: Icon(FIcons.circleX),
+          title: Text(e.toString().replaceAll('Exception: ', '')),
+          alignment: FToastAlignment.bottomCenter,
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _userStore.decks
-        .where((d) => d.cards.length >= 4)
-        .toList();
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
+      appBar: AppBarPrimary(
+        title: Text(
+          'Quiz',
+          style: context.theme.typography.lg.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator.adaptive(
               onRefresh: _loadData,
-              child: filtered.isEmpty
-                  ? _QuizEmpty(isEmpty: filtered.isEmpty)
-                  : GridView.builder(
-                      padding: EdgeInsets.all(10),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final deck = filtered[index];
-
-                        return _QuizDeckCard(
-                          deck: deck,
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => QuizPlayScreen(
-                                  deck: deck,
-                                  onCompleted: (correct) => _quizCompleted(
-                                    deckId: deck.id,
-                                    correctAnswers: correct,
-                                    incorrectAnswers:
-                                        deck.cards.length - correct,
-                                    timeSpentSeconds: 0,
-                                  ),
-                                ),
-                              ),
-                            );
-
-                            // Check if we returned from quiz without completing
-                            // If so, check if there's still a saved state
-                            if (result != 'completed') {
-                              _checkForPreviousQuiz();
-                            }
-                          },
-                        );
-                      },
-                    ),
+              child: _buildContent(),
             ),
+    );
+  }
+
+  Widget _buildContent() {
+    final filtered = _userStore.decks
+        .where((d) => d.cards.length >= 4)
+        .toList();
+
+    if (filtered.isEmpty) {
+      return _QuizEmpty(isEmpty: filtered.isEmpty);
+    }
+
+    return GridView.builder(
+      padding: EdgeInsets.all(10),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.3,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final deck = filtered[index];
+
+        return _QuizDeckCard(
+          deck: deck,
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuizPlayScreen(
+                  deck: deck,
+                  onCompleted: (correct) => _quizCompleted(
+                    deckId: deck.id,
+                    correctAnswers: correct,
+                    incorrectAnswers: deck.cards.length - correct,
+                    timeSpentSeconds: 0,
+                  ),
+                ),
+              ),
+            );
+
+            // Check if we returned from quiz without completing
+            // If so, check if there's still a saved state
+            if (result != 'completed') {
+              _checkForPreviousQuiz();
+            }
+          },
+        );
+      },
     );
   }
 }
@@ -269,25 +294,16 @@ class _QuizDeckCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.theme;
     final colors = theme.colors;
-    final themeOf = Theme.of(context);
     final hasCards = deck.cards.isNotEmpty;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.border, width: 1),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: hasCards ? onTap : null,
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
+    return InkWell(
+      onTap: onTap,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          FCard(
+            image: Center(
+              child: Container(
                 width: 48,
                 height: 48,
                 alignment: Alignment.center,
@@ -301,45 +317,29 @@ class _QuizDeckCard extends StatelessWidget {
                   size: 24,
                 ),
               ),
-              SizedBox(height: 12),
-              Flexible(
-                child: Text(
-                  deck.name,
-                  style: themeOf.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            ),
+            title: Center(
+              child: Text(
+                deck.name,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: theme.typography.sm.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 4),
-              Text(
-                '${deck.cards.length} ${deck.cards.length == 1 ? 'card' : 'cards'}',
-                style: themeOf.textTheme.bodySmall?.copyWith(
-                  color: colors.mutedForeground,
-                ),
+            ),
+            child: Center(
+              child: TBadge(
+                margin: EdgeInsets.only(top: 8),
+                label: '${deck.cards.length} cards',
+                backgroundColor: colors.secondary,
+                foregroundColor: colors.secondaryForeground,
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               ),
-              if (!hasCards) ...[
-                SizedBox(height: 8),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colors.destructive,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Empty',
-                    style: themeOf.textTheme.bodySmall?.copyWith(
-                      letterSpacing: 0.5,
-                      color: colors.destructiveForeground,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -348,23 +348,26 @@ class _QuizDeckCard extends StatelessWidget {
 class _QuizContinueDialog extends StatelessWidget {
   final String name;
   final String progress;
+  final FDialogStyle style;
   final VoidCallback onContinue;
+  final Animation<double> animation;
 
   const _QuizContinueDialog({
     required this.name,
     required this.progress,
     required this.onContinue,
+    required this.style,
+    required this.animation,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: context.theme.colors.border),
-      ),
+    return FDialog(
+      animation: animation,
+      style: style.call,
+      direction: Axis.horizontal,
       title: Text('Continue Previous Quiz?'),
-      content: Column(
+      body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

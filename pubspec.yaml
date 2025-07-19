@@ -1,7 +1,7 @@
 name: flipcard
 description: "A modern learning companion for effective memorization."
 publish_to: 'none'
-version: 1.0.1
+version: 1.1.2
 
 environment:
   sdk: ^3.8.1
@@ -16,7 +16,6 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   back_button_interceptor: ^8.0.4
   fluttertoast: ^8.2.12
-  flutter_dotenv: ^5.2.1
   provider: ^6.1.5
   file_picker: ^10.2.0
   share_plus: ^11.0.0
@@ -32,6 +31,8 @@ dependencies:
   image_picker: ^1.1.2
   image_cropper: ^9.1.0
   flutter_confetti: ^0.5.1
+  intl: ^0.20.2
+  flutter_expandable_fab: ^2.5.2
 
 dev_dependencies:
   flutter_test:
