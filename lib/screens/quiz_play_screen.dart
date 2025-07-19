@@ -1002,6 +1002,7 @@ class _QuizLeaveDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: context.theme.colors.background,
       title: Text('Leave Quiz?'),
       content: Text('Your progress will be lost. Are you sure?'),
       shape: RoundedRectangleBorder(

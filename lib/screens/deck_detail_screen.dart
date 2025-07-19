@@ -1,17 +1,26 @@
-import 'package:flipcard/models/language.dart';
-import 'package:flipcard/screens/quiz_play_screen.dart';
-import 'package:flipcard/services/card_service.dart';
-import 'package:flipcard/stores/user_store.dart';
-import 'package:flutter/material.dart';
-import 'package:flipcard/models/deck.dart';
-import 'package:flipcard/models/flashcard.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:flipcard/widgets/deck_sheet.dart';
+import 'package:flipcard/widgets/expandable_fab.dart';
 import 'package:forui/forui.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'package:flipcard/models/deck.dart';
+import 'package:flipcard/models/language.dart';
+import 'package:flipcard/models/flashcard.dart';
+import 'package:flipcard/stores/user_store.dart';
+import 'package:flipcard/services/card_service.dart';
 
 class DeckDetailsScreen extends StatefulWidget {
   final Deck deck;
 
-  const DeckDetailsScreen({super.key, required this.deck});
+  /// trigger when back to previous page after deleted
+  final VoidCallback? onDeleted;
+
+  const DeckDetailsScreen({super.key, required this.deck, this.onDeleted});
 
   @override
   State<DeckDetailsScreen> createState() => _DeckDetailsScreenState();
@@ -19,11 +28,156 @@ class DeckDetailsScreen extends StatefulWidget {
 
 class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
   late UserStore _userStore;
+  bool _isLoading = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _userStore = Provider.of<UserStore>(context);
+  }
+
+  Future<void> _loadData() async {
+    try {
+      setState(() => _isLoading = true);
+      await _userStore.getData();
+    } catch (e) {
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: Icon(FIcons.circleX),
+          title: Text(e.toString().replaceAll('Exception: ', '')),
+          alignment: FToastAlignment.bottomCenter,
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _exportDeck() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/${widget.deck.name}.json');
+      final timestamp = DateTime.now().toIso8601String().replaceAll(
+        RegExp(r'[^\w]'),
+        '_',
+      );
+
+      final exportData = widget.deck.toJson()
+        ..['exported_at'] = timestamp
+        ..['created_at'] = widget.deck.createdAt.toIso8601String()
+        ..['updated_at'] = widget.deck.updatedAt.toIso8601String();
+
+      await file.writeAsString(json.encode(exportData));
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Sharing ${widget.deck.name} flashcard deck',
+          subject: 'Flashcard Deck Export',
+        ),
+      );
+    } catch (e) {
+      debugPrint('Export error: $e');
+      if (mounted) {
+        showFToast(
+          context: context,
+          icon: const Icon(FIcons.triangleAlert),
+          title: Text('Export Failed'),
+          description: Text(e.toString()),
+          alignment: FToastAlignment.bottomCenter,
+        );
+      }
+    }
+  }
+
+  Future<void> _editDeck() async {
+    try {
+      final updatedDeck = await showFSheet<Deck?>(
+        context: context,
+        side: FLayout.btt,
+        mainAxisMaxRatio: null,
+        builder: (context) => DeckSheet(
+          deck: widget.deck,
+          onSave: (name, description) => widget.deck.copyWith(
+            name: name,
+            description: description,
+            updatedAt: DateTime.now(),
+          ),
+        ),
+      );
+
+      if (updatedDeck != null) {
+        setState(() => _isLoading = true);
+        await _userStore.addDeck(updatedDeck);
+      }
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteDeck() async {
+    try {
+      final confirmed =
+          await showFDialog<bool>(
+            context: context,
+            builder: (context, style, animation) => FDialog(
+              direction: Axis.horizontal,
+              title: const Text('Delete Deck'),
+              body: Text(
+                'Are you sure you want to delete "${widget.deck.name}"?',
+              ),
+              actions: [
+                FButton(
+                  mainAxisSize: MainAxisSize.min,
+                  style: FButtonStyle.outline(),
+                  onPress: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                FButton(
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: () => Navigator.pop(context, true),
+                  style: FButtonStyle.destructive(),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+
+      if (confirmed && mounted) {
+        setState(() => _isLoading = true);
+        await _userStore.deleteDeck(widget.deck.id);
+        if (mounted) Navigator.of(context).pop(true);
+        widget.onDeleted?.call();
+      }
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _openDeckSetting() async {
+    await showFSheet(
+      context: context,
+      side: FLayout.btt,
+      mainAxisMaxRatio: null,
+      builder: (context) => _DeckSettings(
+        deck: widget.deck,
+        onSave: (deck) async {
+          setState(() {
+            // need change 'widget.deck' to editable deck
+            widget.deck.backLanguage = deck.backLanguage;
+            widget.deck.frontLanguage = deck.frontLanguage;
+            widget.deck.shuffle = deck.shuffle;
+          });
+          await _userStore.addDeck(deck);
+        },
+      ),
+    );
   }
 
   Future<void> _addCard() async {
@@ -32,7 +186,7 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
       side: FLayout.btt,
       mainAxisMaxRatio: null,
       builder: (context) => _CardEditSheet(
-        label: 'Create Card',
+        label: 'Add Card',
         card: FlashCard(deckId: widget.deck.id, front: '', back: ''),
       ),
     );
@@ -110,66 +264,44 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
     }
   }
 
-  Future<void> _showDeckSettings() async {
-    await showFSheet(
-      context: context,
-      side: FLayout.btt,
-      mainAxisMaxRatio: null,
-      builder: (context) => _DeckSettings(
-        deck: widget.deck,
-        onSave: (deck) async {
-          debugPrint(deck.toString());
-          setState(() {
-            // need fix 'widget.deck' with editable deck
-            widget.deck.backLanguage = deck.backLanguage;
-            widget.deck.frontLanguage = deck.frontLanguage;
-            widget.deck.shuffle = deck.shuffle;
-          });
-          await _userStore.addDeck(deck);
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final themeOf = Theme.of(context);
+    final colors = context.theme.colors;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: colors.secondary,
+        surfaceTintColor: colors.secondary,
         title: Text(
           widget.deck.name,
-          style: themeOf.textTheme.titleLarge?.copyWith(
+          style: context.theme.typography.base.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
-          if (widget.deck.cards.length >= 4)
-            IconButton(
-              icon: Icon(FIcons.circlePlay),
-              tooltip: 'Start Quiz',
-              style: IconButton.styleFrom(shape: CircleBorder()),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QuizPlayScreen(deck: widget.deck),
-                  ),
-                );
-              },
-            ),
-
           IconButton(
+            iconSize: 20,
+            padding: EdgeInsets.all(4),
+            icon: Icon(FIcons.plus),
+            tooltip: 'Add card',
+            style: IconButton.styleFrom(shape: CircleBorder()),
+            onPressed: _addCard,
+          ),
+          IconButton(
+            iconSize: 20,
+            padding: EdgeInsets.all(4),
             icon: Icon(FIcons.settings2),
             tooltip: 'Deck Settings',
             style: IconButton.styleFrom(shape: CircleBorder()),
-            onPressed: _showDeckSettings,
+            onPressed: _openDeckSetting,
           ),
+
+          SizedBox(width: 4),
         ],
       ),
-      body: _userStore.isLoading
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator.adaptive(
-              onRefresh: _userStore.getData,
+              onRefresh: _loadData,
               child: widget.deck.cards.isEmpty
                   ? _EmptyDeckState(onAddCard: _addCard)
                   : _CardListView(
@@ -178,15 +310,67 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
                       onDelete: _deleteCard,
                     ),
             ),
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        onPressed: _addCard,
-        shape: CircleBorder(
-          side: BorderSide(color: themeOf.colorScheme.outline, width: 1),
-        ),
-        child: const Icon(Icons.add_rounded),
+      floatingActionButtonLocation: ExpandedFab.location,
+      floatingActionButton: ExpandedFab(
+        distance: 60,
+        shape: CircleBorder(),
+        children: [
+          Row(
+            spacing: 10,
+            children: [
+              Text("Delete deck"),
+              FloatingActionButton(
+                mini: true,
+                shape: CircleBorder(),
+                backgroundColor: colors.destructive,
+                foregroundColor: colors.destructiveForeground,
+                heroTag: 'delete_deck',
+                onPressed: _deleteDeck,
+                child: const Icon(FIcons.trash2, size: 20),
+              ),
+            ],
+          ),
+          Row(
+            spacing: 10,
+            children: [
+              Text('Edit deck'),
+              FloatingActionButton(
+                mini: true,
+                shape: CircleBorder(),
+                heroTag: 'edit_deck',
+                onPressed: _editDeck,
+                child: const Icon(FIcons.squarePen, size: 20),
+              ),
+            ],
+          ),
+          if (widget.deck.cards.length >= 4)
+            Row(
+              spacing: 10,
+              children: [
+                Text('Share deck'),
+                FloatingActionButton(
+                  mini: true,
+                  shape: CircleBorder(),
+                  heroTag: 'add_card',
+                  onPressed: _exportDeck,
+                  child: const Icon(FIcons.share2, size: 20),
+                ),
+              ],
+            ),
+        ],
       ),
     );
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      showFToast(
+        context: context,
+        icon: Icon(FIcons.circleX),
+        title: Text(message.replaceAll('Exception: ', '')),
+        alignment: FToastAlignment.bottomCenter,
+      );
+    }
   }
 }
 
@@ -210,7 +394,7 @@ class _EmptyDeckState extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                FIcons.copy,
+                Icons.quiz,
                 size: 80,
                 color: colors.mutedForeground.withValues(alpha: 0.8),
               ),
@@ -231,6 +415,7 @@ class _EmptyDeckState extends StatelessWidget {
               const SizedBox(height: 24),
               FButton(
                 onPress: onAddCard,
+                prefix: Icon(Icons.add),
                 mainAxisSize: MainAxisSize.min,
                 child: const Text('Add Card'),
               ),
@@ -305,7 +490,7 @@ class _FlashCardItem extends StatelessWidget {
         subtitle: card.description != null
             ? Text(
                 card.description!,
-                style: theme.typography.sm.copyWith(
+                style: theme.typography.xs.copyWith(
                   color: colors.mutedForeground,
                 ),
               )
@@ -595,7 +780,7 @@ class _DeckSettingsState extends State<_DeckSettings> {
                   style: const TextStyle(fontSize: 20),
                 ),
                 title: Text(frontLanguage.name),
-                subtitle: Text('Front Card'),
+                subtitle: Text('Question language'),
                 suffix: Icon(
                   Icons.keyboard_arrow_down,
                   color: colors.mutedForeground,
@@ -614,7 +799,7 @@ class _DeckSettingsState extends State<_DeckSettings> {
                   style: const TextStyle(fontSize: 20),
                 ),
                 title: Text(backLanguage.name),
-                subtitle: Text('Back Card'),
+                subtitle: Text('Answer language'),
                 suffix: Icon(
                   Icons.keyboard_arrow_down,
                   color: colors.mutedForeground,

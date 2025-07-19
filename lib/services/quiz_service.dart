@@ -30,6 +30,7 @@ class QuizService {
                 'deckId': card.deckId,
                 'front': card.front,
                 'back': card.back,
+                'description': card.description,
               },
             )
             .toList(),
@@ -90,6 +91,7 @@ class QuizService {
               deckId: cardData['deckId'] as String? ?? '',
               front: cardData['front'] as String? ?? '',
               back: cardData['back'] as String? ?? '',
+              description: cardData['description'] as String? ?? '',
             );
           }
           // Fallback for invalid data

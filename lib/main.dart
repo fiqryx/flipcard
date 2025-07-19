@@ -1,37 +1,35 @@
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_fullscreen/flutter_fullscreen.dart';
 
 import 'package:flipcard/helpers/speech.dart';
-import 'package:flipcard/screens/home_screen.dart';
-import 'package:flipcard/screens/menu_screen.dart';
+import 'package:flipcard/constants/config.dart';
+import 'package:flipcard/stores/user_store.dart';
+import 'package:flipcard/screens/deck_screen.dart';
 import 'package:flipcard/screens/quiz_screen.dart';
 import 'package:flipcard/screens/login_screen.dart';
 import 'package:flipcard/screens/splash_screen.dart';
+import 'package:flipcard/widgets/backpress_exit.dart';
 import 'package:flipcard/screens/profile_screen.dart';
 import 'package:flipcard/screens/register_screen.dart';
-import 'package:flipcard/stores/user_store.dart';
-import 'package:flipcard/widgets/backpress_exit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final speech = Speech();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
-  await dotenv.load(fileName: ".env");
   await FullScreen.ensureInitialized();
-
-  await Supabase.initialize(
-    url: dotenv.get("SUPABASE_URL"),
-    anonKey: dotenv.get("SUPABASE_ANON_KEY"),
-  );
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => speech),
+        ChangeNotifierProvider(create: (_) => Speech()),
         ChangeNotifierProvider(create: (_) => UserStore()),
       ],
       child: const Application(),
@@ -41,7 +39,7 @@ void main() async {
 
 final routes = <String, WidgetBuilder>{
   "/splash": (ctx) => SplashScreen(duration: Duration(seconds: 5)),
-  "/login": (ctx) => LoginScreen(),
+  "/login": (ctx) => BackpressExit(child: LoginScreen()),
   "/register": (ctx) => RegisterScreen(),
   "/main": (ctx) => Main(),
 };
@@ -51,9 +49,7 @@ class Application extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
-    final theme = isDark ? FThemes.zinc.dark : FThemes.zinc.light;
+    final isDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
 
     return MaterialApp(
       routes: routes,
@@ -63,7 +59,7 @@ class Application extends StatelessWidget {
       theme: FThemes.zinc.light.toApproximateMaterialTheme(),
       darkTheme: FThemes.zinc.dark.toApproximateMaterialTheme(),
       builder: (context, child) => FTheme(
-        data: theme,
+        data: isDark ? FThemes.zinc.dark : FThemes.zinc.light,
         child: FToaster(child: child!),
       ),
     );
@@ -82,34 +78,47 @@ class _MainState extends State<Main> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final userStore = Provider.of<UserStore>(context);
+
     return Scaffold(
+      body: BackpressExit(
+        child: IndexedStack(
+          index: _current,
+          children: [DeckScreen(), QuizScreen(), ProfileScreen()],
+        ),
+      ),
       bottomNavigationBar: FBottomNavigationBar(
         index: _current,
         onChange: (idx) => setState(() => _current = idx),
+        style: (style) => style.copyWith(padding: EdgeInsets.only(top: 6)),
         children: [
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.house),
-            label: Text('Home'),
+            style: (p0) => p0.copyWith(padding: EdgeInsets.zero),
+            icon: Icon(FIcons.layers),
+            label: Text('Deck'),
           ),
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.menu),
-            label: Text('Menu'),
-          ),
-          FBottomNavigationBarItem(
+            style: (p0) => p0.copyWith(padding: EdgeInsets.zero),
             icon: Icon(FIcons.circlePlay),
             label: Text('Quiz'),
           ),
           FBottomNavigationBarItem(
-            icon: Icon(FIcons.user),
-            label: Text('Profile'),
+            style: (p0) => p0.copyWith(padding: EdgeInsets.zero),
+            icon: ClipOval(
+              child: FAvatar(
+                size: 28,
+                fallback: Icon(Icons.person),
+                image: NetworkImage(userStore.user?.imageUrl ?? ''),
+                style: (style) => style.copyWith(
+                  backgroundColor: colors.muted,
+                  foregroundColor: colors.primaryForeground,
+                ),
+              ),
+            ),
+            label: Text('Me'),
           ),
         ],
-      ),
-      body: BackpressExit(
-        child: IndexedStack(
-          index: _current,
-          children: [HomeScreen(), MenuScreen(), QuizScreen(), ProfileScreen()],
-        ),
       ),
     );
   }

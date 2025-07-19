@@ -8,15 +8,13 @@
 
 - 📚 **Deck Organization** - Create nested decks with custom categories
 - 🔄 **Import/Export** - Share decks via JSON with media support
-- 🧠 **Adaptive Quizzing** - Built-in spaced repetition algorithm
+- 🧠 **Adaptive Quizzing** - Built-in speech repetition algorithm
 - 📊 **Progress Analytics** - Visual statistics of your learning progress
 - 🌙 **Dark Mode** - Automatic theme switching based on system preferences
 
 ## Screenshots 📱
 
-| Home | Quiz | Statistics |
-|-------------|-----------|-----------|
-| ![Home](screenshots/home.png) | ![Profile](screenshots/quiz.png) | ![Profile](screenshots/profile.png) |
+![Recorder](screenshots/screenrecord.gif)
 
 ## Installation Guide ⚙️ 
 
@@ -31,19 +29,10 @@
 git clone https://github.com/fiqryx/flipcard.git
 
 cd flipcard && flutter pub get
-
-cp .env.example .env
 ```
 
 ```bash
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-```bash
-flutter run -d chrome  # Web preview
-
-flutter run            # Connected device
+flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key
 ```
 
 📥 <a href="./outputs/app-release.apk" download="Flipcard.apk">Download Latest APK</a>

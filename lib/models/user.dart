@@ -4,6 +4,9 @@ class User {
   String name;
   String email;
   String? imageUrl;
+  String? gender;
+  String? phone;
+  DateTime? birthDate;
   int totalDecks;
   int totalCards;
   DateTime? createdAt;
@@ -15,6 +18,9 @@ class User {
     required this.name,
     required this.email,
     this.imageUrl,
+    this.gender,
+    this.phone,
+    this.birthDate,
     this.totalDecks = 0,
     this.totalCards = 0,
     this.createdAt,
@@ -25,6 +31,9 @@ class User {
     'name': name,
     'email': email,
     'image_url': imageUrl,
+    'gender': gender,
+    'phone': phone,
+    'birth_date': birthDate?.toIso8601String(),
     'total_decks': totalDecks,
     'total_cards': totalCards,
     'created_at': createdAt?.toIso8601String(),
@@ -37,6 +46,11 @@ class User {
     name: json['name'],
     email: json['email'],
     imageUrl: json['image_url']?.toString(),
+    gender: json['gender'],
+    phone: json['phone'],
+    birthDate: json['birth_date'] != null
+        ? DateTime.tryParse(json['birth_date'].toString())
+        : null,
     totalDecks: json['total_decks'] ?? 0,
     totalCards: json['total_cards'] ?? 0,
     createdAt: json['created_at'] != null
@@ -53,6 +67,9 @@ class User {
     String? name,
     String? email,
     String? imageUrl,
+    String? gender,
+    String? phone,
+    DateTime? birthDate,
     int? totalDecks,
     int? totalCards,
     DateTime? createdAt,
@@ -64,6 +81,9 @@ class User {
       name: name ?? this.name,
       email: email ?? this.email,
       imageUrl: imageUrl ?? this.imageUrl,
+      gender: gender ?? this.gender,
+      phone: phone ?? this.phone,
+      birthDate: birthDate ?? this.birthDate,
       totalDecks: totalDecks ?? this.totalDecks,
       totalCards: totalCards ?? this.totalCards,
       createdAt: createdAt ?? this.createdAt,
@@ -73,6 +93,6 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, imageUrl: $imageUrl, totalDecks: $totalDecks, totalCards: $totalCards)';
+    return 'User(id: $id, name: $name, email: $email, imageUrl: $imageUrl, gender: $gender, phone: $phone, birthDate: $birthDate, totalDecks: $totalDecks, totalCards: $totalCards)';
   }
 }

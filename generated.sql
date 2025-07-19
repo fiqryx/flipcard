@@ -4,14 +4,16 @@ create table public.user_profiles (
    name        text not null,
    email       text not null,
    image_url   text,
+   gender text,
+   phone text,
+   birth_date date,
    total_decks integer default 0,
    total_cards integer default 0,
    shuffle boolean not null default true,
    created_at  timestamp with time zone default now(),
    updated_at  timestamp with time zone default now(),
    constraint user_profiles_pkey primary key ( id ),
-   constraint user_profiles_user_id_fkey foreign key ( user_id )
-      references auth.users ( id )
+   constraint user_profiles_user_id_fkey foreign key (user_id) references auth.users (id)
 );
 
 CREATE TABLE public.decks (
@@ -21,6 +23,7 @@ CREATE TABLE public.decks (
   description text,
   front_language text DEFAULT 'en-US'::text,
   back_language text DEFAULT 'en-US'::text,
+  shuffle boolean NOT NULL DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT decks_pkey PRIMARY KEY (id),
