@@ -1,4 +1,3 @@
-import 'package:flipcard/screens/permission_screen.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,8 +15,8 @@ import 'package:flipcard/screens/splash_screen.dart';
 import 'package:flipcard/widgets/backpress_exit.dart';
 import 'package:flipcard/screens/profile_screen.dart';
 import 'package:flipcard/screens/register_screen.dart';
-import 'package:flipcard/helpers/local_notification.dart';
-import 'package:flipcard/services/background_service.dart';
+import 'package:flipcard/screens/permission_screen.dart';
+import 'package:flipcard/helpers/awesome_notification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +27,11 @@ void main() async {
 
   await FullScreen.ensureInitialized();
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
-  await LocalNotification.initialize();
-  await BackgroundService.initialize();
+  await ANotification.initialize();
+  await ANotification.scheduleDaily([
+    TimeOfDay(hour: 6, minute: 30),
+    TimeOfDay(hour: 18, minute: 30),
+  ]);
 
   runApp(
     MultiProvider(

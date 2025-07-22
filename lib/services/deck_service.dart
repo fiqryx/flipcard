@@ -1,5 +1,4 @@
-import 'dart:developer';
-
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/models/deck.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -58,7 +57,7 @@ class DeckService {
         return Deck.fromJson(deckJson);
       }).toList();
     } catch (e) {
-      log('Error loading decks: $e', name: "DeckService");
+      Logger.log('Error loading decks: $e', name: "DeckService");
       return [];
     }
   }
@@ -97,7 +96,7 @@ class DeckService {
 
       return Deck.fromJson(deckJson);
     } catch (e) {
-      log('Error loading deck: $e', name: "DeckService");
+      Logger.log('Error loading deck: $e', name: "DeckService");
       return null;
     }
   }
@@ -112,7 +111,7 @@ class DeckService {
         save(deck);
       }
     } catch (e) {
-      log('Error saving decks: $e', name: "DeckService");
+      Logger.log('Error saving decks: $e', name: "DeckService");
       throw Exception('Failed to save decks');
     }
   }
@@ -155,7 +154,7 @@ class DeckService {
         await _supabase.from('cards').upsert(cardsData, onConflict: 'id');
       }
     } catch (e) {
-      log('Error saving deck: $e', name: "DeckService");
+      Logger.log('Error saving deck: $e', name: "DeckService");
       throw Exception('Failed to save deck');
     }
   }
@@ -185,7 +184,7 @@ class DeckService {
 
       return Deck.fromJson(response);
     } catch (e) {
-      log('Error creating deck: $e', name: "DeckService");
+      Logger.log('Error creating deck: $e', name: "DeckService");
       throw Exception('Failed to create deck');
     }
   }
@@ -211,7 +210,7 @@ class DeckService {
           .eq('id', deck.id)
           .eq('user_id', user.id);
     } catch (e) {
-      log('Error updating deck metadata: $e', name: "DeckService");
+      Logger.log('Error updating deck metadata: $e', name: "DeckService");
       throw Exception('Failed to update deck');
     }
   }
@@ -232,7 +231,7 @@ class DeckService {
           .eq('id', deckId)
           .eq('user_id', user.id);
     } catch (e) {
-      log('Error deleting deck: $e', name: "DeckService");
+      Logger.log('Error deleting deck: $e', name: "DeckService");
       throw Exception('Failed to delete deck');
     }
   }
@@ -251,7 +250,7 @@ class DeckService {
 
       return response.count;
     } catch (e) {
-      log('Error getting deck count: $e', name: "DeckService");
+      Logger.log('Error getting deck count: $e', name: "DeckService");
       return 0;
     }
   }

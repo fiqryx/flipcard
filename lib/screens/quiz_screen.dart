@@ -1,4 +1,4 @@
-import 'dart:developer' as dev;
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/models/quiz_result.dart';
 import 'package:flipcard/screens/quiz_play_screen.dart';
 import 'package:flipcard/services/quiz_result_service.dart';
@@ -144,7 +144,7 @@ class _QuizScreen extends State<QuizScreen> {
 
       _userStore.addQuiz(await QuizResultService.save(quizResult));
     } catch (e) {
-      dev.log('Error saving quiz result: $e', name: "USER_STORE");
+      Logger.log('Error saving quiz result: $e', name: "QuizScreen");
     }
   }
 

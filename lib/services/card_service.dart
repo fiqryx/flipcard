@@ -1,4 +1,4 @@
-import 'dart:developer';
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/models/flashcard.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,7 +19,7 @@ class CardService {
 
       return FlashCard.fromJson(response);
     } catch (e) {
-      log('Error loading card: $e', name: "CardService");
+      Logger.log('Error loading card: $e', name: "CardService");
       return null;
     }
   }
@@ -38,7 +38,7 @@ class CardService {
 
       return response.map((cardData) => FlashCard.fromJson(cardData)).toList();
     } catch (e) {
-      log('Error loading cards for deck: $e', name: "CardService");
+      Logger.log('Error loading cards for deck: $e', name: "CardService");
       return [];
     }
   }
@@ -67,7 +67,7 @@ class CardService {
 
       return FlashCard.fromJson(response);
     } catch (e) {
-      log('Error creating card: $e', name: "CardService");
+      Logger.log('Error creating card: $e', name: "CardService");
       throw Exception('Failed to create card');
     }
   }
@@ -101,7 +101,7 @@ class CardService {
 
       return response.map((cardData) => FlashCard.fromJson(cardData)).toList();
     } catch (e) {
-      log('Error bulk adding cards: $e', name: "CardService");
+      Logger.log('Error bulk adding cards: $e', name: "CardService");
       throw Exception('Failed to add cards to deck');
     }
   }
@@ -122,7 +122,7 @@ class CardService {
           })
           .eq('id', card.id);
     } catch (e) {
-      log('Error updating card: $e', name: "CardService");
+      Logger.log('Error updating card: $e', name: "CardService");
       throw Exception('Failed to update card');
     }
   }
@@ -135,7 +135,7 @@ class CardService {
 
       await _supabase.from('cards').delete().eq('id', cardId);
     } catch (e) {
-      log('Error deleting card: $e', name: "CardService");
+      Logger.log('Error deleting card: $e', name: "CardService");
       throw Exception('Failed to delete card');
     }
   }
@@ -148,7 +148,7 @@ class CardService {
 
       await _supabase.from('cards').delete().eq('deck_id', deckId);
     } catch (e) {
-      log('Error deleting cards for deck: $e', name: "CardService");
+      Logger.log('Error deleting cards for deck: $e', name: "CardService");
       throw Exception('Failed to delete cards');
     }
   }
@@ -167,7 +167,7 @@ class CardService {
 
       return response.count;
     } catch (e) {
-      log('Error getting card count: $e', name: "CardService");
+      Logger.log('Error getting card count: $e', name: "CardService");
       return 0;
     }
   }
@@ -196,7 +196,7 @@ class CardService {
 
       return cardResponse.count;
     } catch (e) {
-      log('Error getting total card count: $e', name: "CardService");
+      Logger.log('Error getting total card count: $e', name: "CardService");
       return 0;
     }
   }

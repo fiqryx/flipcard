@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flipcard/constants/enums.dart';
 import 'package:flipcard/constants/extensions.dart';
 import 'package:flipcard/models/user.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,8 +22,14 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen>
     with TickerProviderStateMixin {
   late UserStore _userStore;
-
   final _picker = ImagePicker();
+  final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
+
   int _tabIndex = 0;
   bool _isLoading = false;
 
@@ -111,6 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     Navigator.pop(context);
     try {
       await UserService.signOut();
+      await _storage.delete(key: 'logged');
       if (mounted) {
         Navigator.of(
           context,
