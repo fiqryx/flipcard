@@ -75,6 +75,23 @@ class QuizResultService {
     }
   }
 
+  /// Get last quiz
+  static Future<QuizResult?> getLastQuizByUserId(String userId) async {
+    try {
+      final response = await _supabase
+          .from(_tableName)
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(1);
+
+      return response.isNotEmpty ? QuizResult.fromJson(response[0]) : null;
+    } catch (e) {
+      dev.log('Error loading quiz results: $e', name: 'QUIZ_RESULT_SERVICE');
+      rethrow;
+    }
+  }
+
   /// Get quiz statistics for a user
   static Future<QuizStats> getQuizStatByUserId(String userId) async {
     try {

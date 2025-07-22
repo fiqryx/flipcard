@@ -56,7 +56,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted && event == AuthChangeEvent.signedIn && session != null) {
         await _userStore.getData();
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed("/main");
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/main', (route) => false);
         }
       }
     });

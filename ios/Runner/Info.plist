@@ -60,5 +60,9 @@
 		<string>This app needs microphone access for voice commands during quiz</string>
 		<key>NSSpeechRecognitionUsageDescription</key>
 		<string>This app needs speech recognition for voice commands during quiz</string>
+		<key>BGTaskSchedulerPermittedIdentifiers</key>
+		<array>
+			<string>dev.flutter.background.refresh</string>
+		</array>
 	</dict>
 </plist>
