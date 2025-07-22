@@ -27,3 +27,10 @@ extension DateTimeFormatting on DateTime? {
     return format(); // Falls back to dd-MM-yyyy
   }
 }
+
+extension DateTimeExtension on DateTime {
+  int get dayOfYear {
+    final firstDay = DateTime(year, 1, 1);
+    return difference(firstDay).inDays + 1;
+  }
+}

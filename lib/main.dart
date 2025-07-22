@@ -1,3 +1,4 @@
+import 'package:flipcard/screens/permission_screen.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +16,8 @@ import 'package:flipcard/screens/splash_screen.dart';
 import 'package:flipcard/widgets/backpress_exit.dart';
 import 'package:flipcard/screens/profile_screen.dart';
 import 'package:flipcard/screens/register_screen.dart';
+import 'package:flipcard/helpers/local_notification.dart';
+import 'package:flipcard/services/background_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +28,8 @@ void main() async {
 
   await FullScreen.ensureInitialized();
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  await LocalNotification.initialize();
+  await BackgroundService.initialize();
 
   runApp(
     MultiProvider(
@@ -40,6 +45,7 @@ void main() async {
 final routes = <String, WidgetBuilder>{
   "/splash": (ctx) => SplashScreen(duration: Duration(seconds: 5)),
   "/login": (ctx) => BackpressExit(child: LoginScreen()),
+  "/permission": (ctx) => BackpressExit(child: PermissionScreen()),
   "/register": (ctx) => RegisterScreen(),
   "/main": (ctx) => Main(),
 };
@@ -82,12 +88,6 @@ class _MainState extends State<Main> {
     final userStore = Provider.of<UserStore>(context);
 
     return Scaffold(
-      body: BackpressExit(
-        child: IndexedStack(
-          index: _current,
-          children: [DeckScreen(), QuizScreen(), ProfileScreen()],
-        ),
-      ),
       bottomNavigationBar: FBottomNavigationBar(
         index: _current,
         onChange: (idx) => setState(() => _current = idx),
@@ -119,6 +119,12 @@ class _MainState extends State<Main> {
             label: Text('Me'),
           ),
         ],
+      ),
+      body: BackpressExit(
+        child: IndexedStack(
+          index: _current,
+          children: [DeckScreen(), QuizScreen(), ProfileScreen()],
+        ),
       ),
     );
   }

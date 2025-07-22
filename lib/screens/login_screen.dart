@@ -1,4 +1,5 @@
 import 'dart:developer' as dev;
+import 'package:flipcard/services/background_service.dart';
 import 'package:flipcard/services/user_service.dart';
 import 'package:flipcard/stores/user_store.dart';
 import 'package:flutter/material.dart';
@@ -49,11 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
       final event = data.event;
       final session = data.session;
 
-      if (mounted && event == AuthChangeEvent.signedIn && session != null) {
+      if (event == AuthChangeEvent.signedIn && session != null) {
         await _userStore.getData();
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed("/main");
+          setState(() => _isLoading = false);
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/main', (route) => false);
         }
+        BackgroundService.startService();
+      } else {
+        BackgroundService.stopService();
       }
     });
   }
@@ -265,30 +272,22 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      await _userStore.getData();
-      if (mounted) Navigator.of(context).pushReplacementNamed('/main');
     } catch (e) {
-      _showError(e.toString());
-    } finally {
       setState(() => _isLoading = false);
+      _showError('Sign in failed: ${e.toString()}');
     }
   }
 
-  // ignore: unused_element
   Future<void> _loginGoogle() async {
-    setState(() => _isGoogleLoading = true);
-
     try {
-      // Use Supabase OAuth flow instead of native Google Sign In
+      setState(() => _isGoogleLoading = true);
       await Supabase.instance.client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: 'com.example.flipcard://login-callback/',
-        authScreenLaunchMode: LaunchMode.externalApplication,
+        authScreenLaunchMode: LaunchMode.platformDefault,
       );
-    } catch (error) {
-      if (mounted) {
-        _showError('Google sign in failed: ${error.toString()}');
-      }
+    } catch (e) {
+      _showError('Google sign in failed: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }

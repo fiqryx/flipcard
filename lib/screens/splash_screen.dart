@@ -1,7 +1,10 @@
 import 'dart:developer' as dev;
+import 'package:back_button_interceptor/back_button_interceptor.dart';
+import 'package:flipcard/services/background_service.dart';
 import 'package:flipcard/services/user_service.dart';
 import 'package:flipcard/stores/user_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:forui/forui.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -21,12 +24,33 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
 
+  final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+    BackButtonInterceptor.add(_interceptor, name: "exit", context: context);
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _userStore = Provider.of<UserStore>(context);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    BackButtonInterceptor.remove(_interceptor);
+    super.dispose();
   }
 
   Future<void> _initialize() async {
@@ -41,6 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
           await _userStore.getData();
         } else if (event == AuthChangeEvent.signedOut) {
           _userStore.reset();
+          BackgroundService.stopService();
         }
       });
 
@@ -50,13 +75,12 @@ class _SplashScreenState extends State<SplashScreen>
 
       await _controller.forward();
 
-      // Navigate based on authentication status
+      final setupDone = await _storage.read(key: 'setup_permission');
       if (mounted) {
-        if (_userStore.isLogged) {
-          Navigator.of(context).pushReplacementNamed('/main');
-        } else {
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
+        final name = setupDone == "true"
+            ? (_userStore.isLogged ? '/main' : '/login')
+            : '/permission';
+        Navigator.of(context).pushNamedAndRemoveUntil(name, (route) => false);
       }
     } catch (e) {
       dev.log(e.toString(), name: "initialize");
@@ -71,16 +95,8 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _userStore = Provider.of<UserStore>(context);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  bool _interceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    return true;
   }
 
   @override

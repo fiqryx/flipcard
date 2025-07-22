@@ -20,7 +20,12 @@ class _HomeScreenState extends State<HomeScreen> {
   late UserStore _userStore;
 
   final _layoutKey = 'home_layout';
-  final _storage = FlutterSecureStorage();
+  final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
 
   bool _isLoading = false;
   ViewMode _viewMode = ViewMode.list;
@@ -42,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isLoading = true);
 
       final layout = await _storage.read(key: _layoutKey);
-      debugPrint(layout);
       setState(() {
         _viewMode = layout == 'grid' ? ViewMode.grid : ViewMode.list;
       });

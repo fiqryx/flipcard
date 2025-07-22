@@ -3,6 +3,7 @@ import 'package:flipcard/models/deck.dart';
 import 'package:flipcard/models/quiz_result.dart';
 import 'package:flipcard/models/quiz_stats.dart';
 import 'package:flipcard/models/user.dart';
+import 'package:flipcard/services/background_service.dart';
 import 'package:flipcard/services/deck_service.dart';
 import 'package:flipcard/services/quiz_result_service.dart';
 import 'package:flipcard/services/user_service.dart';
@@ -212,6 +213,7 @@ class UserStore extends ChangeNotifier {
     _decks = [];
     _isLogged = false;
     _quiz = [];
+    BackgroundService.reset();
     notifyListeners();
   }
 }

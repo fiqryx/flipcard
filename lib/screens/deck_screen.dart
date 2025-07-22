@@ -28,7 +28,12 @@ class _DeckScreenState extends State<DeckScreen> {
   late UserStore _userStore;
 
   final _viewKey = 'deck_view';
-  final _storage = FlutterSecureStorage();
+  final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
 
   bool _isLoading = false;
   String _searchValue = '';
