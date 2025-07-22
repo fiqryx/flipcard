@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'dart:developer';
 import 'package:flipcard/constants/enums.dart';
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flipcard/models/voicer.dart';
 import 'package:flutter/material.dart';
@@ -191,8 +191,7 @@ class Speech with ChangeNotifier {
     notifyListeners();
   }
 
-  void _log(String msg) {
-    var timestamp = DateTime.now().toIso8601String();
-    log('[$timestamp]: $msg', name: 'Speech');
+  void _log(String message) {
+    Logger.log(message, name: 'Speech');
   }
 }

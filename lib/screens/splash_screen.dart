@@ -1,13 +1,12 @@
-import 'dart:developer' as dev;
-import 'package:back_button_interceptor/back_button_interceptor.dart';
-import 'package:flipcard/services/background_service.dart';
-import 'package:flipcard/services/user_service.dart';
-import 'package:flipcard/stores/user_store.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:forui/forui.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flipcard/helpers/logger.dart';
+import 'package:flipcard/stores/user_store.dart';
+import 'package:flipcard/services/user_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 
 class SplashScreen extends StatefulWidget {
   final Duration duration;
@@ -65,12 +64,13 @@ class _SplashScreenState extends State<SplashScreen>
           await _userStore.getData();
         } else if (event == AuthChangeEvent.signedOut) {
           _userStore.reset();
-          BackgroundService.stopService();
+          await _storage.delete(key: 'logged');
         }
       });
 
       if (UserService.isAuthenticated) {
         await _userStore.getData();
+        await _storage.write(key: 'logged', value: 'true');
       }
 
       await _controller.forward();
@@ -83,7 +83,7 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.of(context).pushNamedAndRemoveUntil(name, (route) => false);
       }
     } catch (e) {
-      dev.log(e.toString(), name: "initialize");
+      Logger.log(e.toString(), name: "SplashScreen");
       setState(_userStore.reset);
       if (mounted) {
         showFToast(

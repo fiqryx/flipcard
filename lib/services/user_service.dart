@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'dart:developer' as dev;
 import 'dart:io';
 import 'dart:ui';
+import 'package:uuid/uuid.dart';
 import 'package:flipcard/models/deck.dart';
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/models/flashcard.dart';
 import 'package:flipcard/models/user.dart' as model;
 import 'package:flipcard/services/deck_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 class UserService {
   static final SupabaseClient _supabase = Supabase.instance.client;
@@ -36,7 +36,7 @@ class UserService {
         return model.User.fromJson(response);
       } on PostgrestException catch (e) {
         if (e.code == 'PGRST116') {
-          dev.log(
+          Logger.log(
             'User profile not found, creating new one',
             name: "UserService",
           );
@@ -47,15 +47,15 @@ class UserService {
         );
       }
     } on SocketException catch (e) {
-      dev.log('Network error loading user: $e', name: "UserService");
+      Logger.log('Network error loading user: $e', name: "UserService");
       throw Exception(
         "Connection failed. Please check your internet connection and try again.",
       );
     } on TimeoutException catch (e) {
-      dev.log('Timeout creating profile: $e', name: "UserService");
+      Logger.log('Timeout creating profile: $e', name: "UserService");
       throw Exception("Connection timed out. Please try again.");
     } catch (e) {
-      dev.log(
+      Logger.log(
         'Unexpected error loading user: ${e.toString()}',
         name: "UserService",
       );
@@ -87,7 +87,7 @@ class UserService {
       // Use upsert with onConflict to specify which column to use for conflict resolution
       await _supabase.from('user_profiles').upsert(data, onConflict: 'user_id');
     } catch (e) {
-      dev.log('Error saving user: $e', name: "UserService");
+      Logger.log('Error saving user: $e', name: "UserService");
       throw Exception('Failed to save user profile');
     }
   }
@@ -110,11 +110,9 @@ class UserService {
         _supabase.storage.from(bucketId).remove(['profile_images/$oldFileName'])
         // ignore: body_might_complete_normally_catch_error
         .catchError((err, stackTrace) {
-          dev.log(
+          Logger.log(
             'Error remove previous profile image',
             name: "UserService",
-            error: err,
-            stackTrace: stackTrace,
           );
         });
       }
@@ -123,7 +121,7 @@ class UserService {
 
       return _supabase.storage.from(bucketId).getPublicUrl(path);
     } catch (e) {
-      dev.log('Error uploading profile image: $e', name: "UserService");
+      Logger.log('Error uploading profile image: $e', name: "UserService");
       throw Exception('Failed to upload profile image');
     }
   }
@@ -149,7 +147,7 @@ class UserService {
           .update(updates)
           .eq('user_id', authUser.id);
     } catch (e) {
-      dev.log('Error updating user stats: $e', name: "UserService");
+      Logger.log('Error updating user stats: $e', name: "UserService");
       throw Exception('Failed to update user statistics');
     }
   }
@@ -171,7 +169,7 @@ class UserService {
       // Sign out the user
       await _supabase.auth.signOut();
     } catch (e) {
-      dev.log('Error clearing user data: $e', name: "UserService");
+      Logger.log('Error clearing user data: $e', name: "UserService");
       throw Exception('Failed to clear user data');
     }
   }
@@ -180,21 +178,21 @@ class UserService {
     try {
       await _supabase.auth.signInWithPassword(email: email, password: password);
     } on SocketException catch (e) {
-      dev.log('Network error: $e', name: "UserService");
+      Logger.log('Network error: $e', name: "UserService");
       throw Exception(
         "Connection failed. Please check your internet connection and try again.",
       );
     } on AuthApiException catch (e) {
-      dev.log('Sign in error: $e', name: "UserService");
+      Logger.log('Sign in error: $e', name: "UserService");
       throw Exception(e.message);
     } on AuthException catch (e) {
-      dev.log('Sign in error: $e', name: "UserService");
+      Logger.log('Sign in error: $e', name: "UserService");
       throw Exception(e.message);
     } on TimeoutException catch (e) {
-      dev.log('Sign in timeout: $e', name: "UserService");
+      Logger.log('Sign in timeout: $e', name: "UserService");
       throw Exception("Connection timed out. Please try again.");
     } catch (e) {
-      dev.log('Error signing in: $e', name: "UserService");
+      Logger.log('Error signing in: $e', name: "UserService");
       throw Exception("An unexpected error occurred. Please try again later");
     }
   }
@@ -212,21 +210,21 @@ class UserService {
         emailRedirectTo: 'com.example.flipcard://email-verify',
       );
     } on SocketException catch (e) {
-      dev.log('Network error loading user: $e', name: "UserService");
+      Logger.log('Network error loading user: $e', name: "UserService");
       throw Exception(
         "Connection failed. Please check your internet connection and try again.",
       );
     } on AuthApiException catch (e) {
-      dev.log('Sign in error: $e', name: "UserService");
+      Logger.log('Sign in error: $e', name: "UserService");
       throw Exception(e.message);
     } on AuthException catch (e) {
-      dev.log('Sign in error: $e', name: "UserService");
+      Logger.log('Sign in error: $e', name: "UserService");
       throw Exception(e.message);
     } on TimeoutException catch (e) {
-      dev.log('Timeout creating profile: $e', name: "UserService");
+      Logger.log('Timeout creating profile: $e', name: "UserService");
       throw Exception("Connection timed out. Please try again.");
     } catch (e) {
-      dev.log('Error signing in: $e', name: "UserService");
+      Logger.log('Error signing in: $e', name: "UserService");
       throw Exception("An unexpected error occurred. Please try again later");
     }
   }
@@ -235,7 +233,7 @@ class UserService {
     try {
       await _supabase.auth.signOut();
     } catch (e) {
-      dev.log('Error signing out: $e', name: "UserService");
+      Logger.log('Error signing out: $e', name: "UserService");
       throw Exception('Failed to sign out');
     }
   }
@@ -245,7 +243,7 @@ class UserService {
       final metadata = authUser.userMetadata ?? {};
       final emailPrefix = authUser.email?.split('@').first;
 
-      dev.log(metadata.toString());
+      Logger.log(metadata.toString());
 
       final userData = {
         'user_id': authUser.id,
@@ -271,7 +269,7 @@ class UserService {
 
       return model.User.fromJson(response);
     } catch (e) {
-      dev.log('Error creating user profile: $e', name: "UserService");
+      Logger.log('Error creating user profile: $e', name: "UserService");
       rethrow;
     }
   }

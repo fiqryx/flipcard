@@ -1,8 +1,8 @@
-import 'dart:developer' as dev;
-import 'package:flipcard/services/background_service.dart';
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/services/user_service.dart';
 import 'package:flipcard/stores/user_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:forui/forui.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +21,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
 
   bool _isLoading = false;
   bool _isGoogleLoading = false;
@@ -52,15 +58,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (event == AuthChangeEvent.signedIn && session != null) {
         await _userStore.getData();
+        await _storage.write(key: "logged", value: "true");
         if (mounted) {
           setState(() => _isLoading = false);
           Navigator.of(
             context,
           ).pushNamedAndRemoveUntil('/main', (route) => false);
         }
-        BackgroundService.startService();
-      } else {
-        BackgroundService.stopService();
       }
     });
   }
@@ -360,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showError(String message) {
-    dev.log(message, name: "LOGIN_ERROR");
+    Logger.log(message, name: "LoginScreen");
     showFToast(
       context: context,
       title: Text(message.replaceAll('Exception: ', '')),

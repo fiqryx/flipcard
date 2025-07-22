@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:developer';
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flipcard/models/flashcard.dart';
 
@@ -42,7 +42,7 @@ class QuizService {
       await _storage.write(key: _quizStateKey, value: jsonEncode(quizState));
     } catch (e) {
       // Silently handle storage errors
-      log('Error saving quiz state: $e', name: "QuizService");
+      Logger.log('Error saving quiz state: $e', name: "QuizService");
     }
   }
 
@@ -60,7 +60,7 @@ class QuizService {
         }
       }
     } catch (e) {
-      log('Error reading quiz state: $e', name: "QuizService");
+      Logger.log('Error reading quiz state: $e', name: "QuizService");
       // If there's an error reading the state, clear it
       await clearQuizState();
     }
@@ -71,7 +71,7 @@ class QuizService {
     try {
       await _storage.delete(key: _quizStateKey);
     } catch (e) {
-      log('Error clearing quiz state: $e', name: "QuizService");
+      Logger.log('Error clearing quiz state: $e', name: "QuizService");
     }
   }
 

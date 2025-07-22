@@ -1,4 +1,4 @@
-import 'dart:developer' as dev;
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/models/quiz_result.dart';
 import 'package:flipcard/models/quiz_stats.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,10 +16,10 @@ class QuizResultService {
           .select()
           .single();
 
-      dev.log('Quiz result saved successfully', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log('Quiz result saved successfully', name: 'QUIZ_RESULT_SERVICE');
       return QuizResult.fromJson(response);
     } catch (e) {
-      dev.log('Error saving quiz result: $e', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log('Error saving quiz result: $e', name: 'QUIZ_RESULT_SERVICE');
       rethrow;
     }
   }
@@ -37,13 +37,13 @@ class QuizResultService {
           .map((json) => QuizResult.fromJson(json))
           .toList();
 
-      dev.log(
+      Logger.log(
         'Loaded ${results.length} quiz results for user',
         name: 'QUIZ_RESULT_SERVICE',
       );
       return results;
     } catch (e) {
-      dev.log('Error loading quiz results: $e', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log('Error loading quiz results: $e', name: 'QUIZ_RESULT_SERVICE');
       rethrow;
     }
   }
@@ -61,13 +61,13 @@ class QuizResultService {
           .map((json) => QuizResult.fromJson(json))
           .toList();
 
-      dev.log(
+      Logger.log(
         'Loaded ${results.length} quiz results for deck',
         name: 'QUIZ_RESULT_SERVICE',
       );
       return results;
     } catch (e) {
-      dev.log(
+      Logger.log(
         'Error loading deck quiz results: $e',
         name: 'QUIZ_RESULT_SERVICE',
       );
@@ -87,7 +87,7 @@ class QuizResultService {
 
       return response.isNotEmpty ? QuizResult.fromJson(response[0]) : null;
     } catch (e) {
-      dev.log('Error loading quiz results: $e', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log('Error loading quiz results: $e', name: 'QUIZ_RESULT_SERVICE');
       rethrow;
     }
   }
@@ -131,7 +131,7 @@ class QuizResultService {
         recent: results.take(5).toList(),
       );
     } catch (e) {
-      dev.log('Error getting quiz stats: $e', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log('Error getting quiz stats: $e', name: 'QUIZ_RESULT_SERVICE');
       rethrow;
     }
   }
@@ -168,7 +168,10 @@ class QuizResultService {
         recentResults: results.take(5).toList(),
       );
     } catch (e) {
-      dev.log('Error getting deck quiz stats: $e', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log(
+        'Error getting deck quiz stats: $e',
+        name: 'QUIZ_RESULT_SERVICE',
+      );
       rethrow;
     }
   }
@@ -178,9 +181,12 @@ class QuizResultService {
     try {
       await _supabase.from(_tableName).delete().eq('id', quizResultId);
 
-      dev.log('Quiz result deleted successfully', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log(
+        'Quiz result deleted successfully',
+        name: 'QUIZ_RESULT_SERVICE',
+      );
     } catch (e) {
-      dev.log('Error deleting quiz result: $e', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log('Error deleting quiz result: $e', name: 'QUIZ_RESULT_SERVICE');
       rethrow;
     }
   }
@@ -190,9 +196,12 @@ class QuizResultService {
     try {
       await _supabase.from(_tableName).delete().eq('user_id', userId);
 
-      dev.log('All quiz results deleted for user', name: 'QUIZ_RESULT_SERVICE');
+      Logger.log(
+        'All quiz results deleted for user',
+        name: 'QUIZ_RESULT_SERVICE',
+      );
     } catch (e) {
-      dev.log(
+      Logger.log(
         'Error deleting user quiz results: $e',
         name: 'QUIZ_RESULT_SERVICE',
       );

@@ -1,4 +1,4 @@
-import 'dart:developer' as dev;
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/services/user_service.dart';
 import 'package:flipcard/stores/user_store.dart';
 import 'package:flutter/material.dart';
@@ -318,7 +318,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showError(String message) {
-    dev.log(message, name: "REGISTER_ERROR");
+    Logger.log(message, name: "RegisterScreen");
     showFToast(
       context: context,
       title: Text(message),

@@ -1,9 +1,8 @@
-import 'dart:developer' as dev;
+import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/models/deck.dart';
 import 'package:flipcard/models/quiz_result.dart';
 import 'package:flipcard/models/quiz_stats.dart';
 import 'package:flipcard/models/user.dart';
-import 'package:flipcard/services/background_service.dart';
 import 'package:flipcard/services/deck_service.dart';
 import 'package:flipcard/services/quiz_result_service.dart';
 import 'package:flipcard/services/user_service.dart';
@@ -69,7 +68,7 @@ class UserStore extends ChangeNotifier {
       final user = await UserService.getById();
       final decks = await DeckService.getByUserId();
 
-      dev.log(user.toString(), name: "UserStore");
+      Logger.log(user.toString(), name: "UserStore");
 
       if (user != null) {
         final quiz = await QuizResultService.getByUserId(user.userId);
@@ -83,7 +82,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to load data: ${e.toString()}';
-      dev.log('Error loading data: $e', name: "USER_STORE");
+      Logger.log('Error loading data: $e', name: "USER_STORE");
       rethrow;
     } finally {
       _isLoading = false;
@@ -122,7 +121,7 @@ class UserStore extends ChangeNotifier {
         totalCards: totalCards,
       );
 
-      dev.log(
+      Logger.log(
         'decks: $totalDecks, cards: $totalCards',
         name: 'updateUserStats',
       );
@@ -130,7 +129,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to update user stats: ${e.toString()}';
-      dev.log('Error updating user stats: $e', name: "USER_STORE");
+      Logger.log('Error updating user stats: $e', name: "USER_STORE");
     }
   }
 
@@ -148,7 +147,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to update decks: ${e.toString()}';
-      dev.log('Error updating decks: $e', name: "USER_STORE");
+      Logger.log('Error updating decks: $e', name: "USER_STORE");
     }
 
     notifyListeners();
@@ -175,7 +174,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to add deck: ${e.toString()}';
-      dev.log('Error adding deck: $e', name: "USER_STORE");
+      Logger.log('Error adding deck: $e', name: "USER_STORE");
     }
 
     notifyListeners();
@@ -195,7 +194,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to delete deck: ${e.toString()}';
-      dev.log('Error deleting deck: $e', name: "USER_STORE");
+      Logger.log('Error deleting deck: $e', name: "USER_STORE");
     }
 
     notifyListeners();
@@ -213,7 +212,6 @@ class UserStore extends ChangeNotifier {
     _decks = [];
     _isLogged = false;
     _quiz = [];
-    BackgroundService.reset();
     notifyListeners();
   }
 }
