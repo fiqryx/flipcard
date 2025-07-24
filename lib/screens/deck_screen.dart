@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flipcard/constants/storage.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:flipcard/models/deck.dart';
 import 'package:flipcard/models/flashcard.dart';
@@ -26,14 +26,7 @@ class DeckScreen extends StatefulWidget {
 
 class _DeckScreenState extends State<DeckScreen> {
   late UserStore _userStore;
-
   final _viewKey = 'deck_view';
-  final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
 
   bool _isLoading = false;
   String _searchValue = '';
@@ -56,7 +49,7 @@ class _DeckScreenState extends State<DeckScreen> {
     try {
       setState(() => _isLoading = true);
 
-      final layout = await _storage.read(key: _viewKey);
+      final layout = await storage.read(key: _viewKey);
       debugPrint(layout);
       setState(() {
         _viewMode = layout == 'grid' ? ViewMode.grid : ViewMode.list;
@@ -200,7 +193,7 @@ class _DeckScreenState extends State<DeckScreen> {
 
   void _toggleLayout() async {
     final isList = _viewMode == ViewMode.list;
-    await _storage.write(key: _viewKey, value: isList ? 'grid' : 'list');
+    await storage.write(key: _viewKey, value: isList ? 'grid' : 'list');
     setState(() => _viewMode = isList ? ViewMode.grid : ViewMode.list);
   }
 

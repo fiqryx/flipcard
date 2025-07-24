@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#ffffff</color>
+    <color name="foreground">#0a0a0a</color>
+    <color name="primary">#171717</color>
+    <color name="primary_foreground">#fafafa</color>
+    <color name="secondary">#f5f5f5</color>
+    <color name="secondary_foreground">#171717</color>
+    <color name="muted">#f5f5f5</color>
+    <color name="muted_foreground">#737373</color>
+    <color name="accent">#f5f5f5</color>
+    <color name="accent_foreground">#171717</color>
+    <color name="destructive">#ef4444</color>
+    <color name="destructive_foreground">#fafafa</color>
+    <color name="border">#e5e5e5</color>
+    <color name="input">#e5e5e5</color>
+    <color name="ring">#a1a1a1</color>
+
+    <!-- support -->
+    <color name="transparent">#00FFFFFF</color>
+    <color name="red">#ef4444</color>
+    <color name="orange">#f97316</color>
+    <color name="deep_orange">#ff5722</color>
+    <color name="amber">#f59e0b</color>
+    <color name="yellow">#eab308</color>
+    <color name="green">#22c55e</color>
+    <color name="teal">#14b8a6</color>
+    <color name="cyan">#06b6d4</color>
+</resources>

@@ -1,10 +1,10 @@
 import 'package:flipcard/constants/config.dart';
 import 'package:flipcard/constants/enums.dart';
+import 'package:flipcard/constants/storage.dart';
 import 'package:flipcard/widgets/app_bar.dart';
 import 'package:flipcard/widgets/button_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flipcard/stores/user_store.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:forui/forui.dart';
 import 'package:provider/provider.dart';
@@ -18,14 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late UserStore _userStore;
-
   final _layoutKey = 'home_layout';
-  final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
 
   bool _isLoading = false;
   ViewMode _viewMode = ViewMode.list;
@@ -46,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       setState(() => _isLoading = true);
 
-      final layout = await _storage.read(key: _layoutKey);
+      final layout = await storage.read(key: _layoutKey);
       setState(() {
         _viewMode = layout == 'grid' ? ViewMode.grid : ViewMode.list;
       });
@@ -68,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _toggleLayout() async {
     final isList = _viewMode == ViewMode.list;
-    await _storage.write(key: _layoutKey, value: isList ? 'grid' : 'list');
+    await storage.write(key: _layoutKey, value: isList ? 'grid' : 'list');
     setState(() => _viewMode = isList ? ViewMode.grid : ViewMode.list);
   }
 

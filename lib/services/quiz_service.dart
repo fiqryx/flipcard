@@ -1,15 +1,9 @@
 import 'dart:convert';
+import 'package:flipcard/constants/storage.dart';
 import 'package:flipcard/helpers/logger.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flipcard/models/flashcard.dart';
 
 class QuizService {
-  static const FlutterSecureStorage _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
   static const String _quizStateKey = 'quiz_state';
 
   static Future<void> saveQuizState({
@@ -39,7 +33,7 @@ class QuizService {
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
-      await _storage.write(key: _quizStateKey, value: jsonEncode(quizState));
+      await storage.write(key: _quizStateKey, value: jsonEncode(quizState));
     } catch (e) {
       // Silently handle storage errors
       Logger.log('Error saving quiz state: $e', name: "QuizService");
@@ -48,7 +42,7 @@ class QuizService {
 
   static Future<Map<String, dynamic>?> getQuizState() async {
     try {
-      final stateString = await _storage.read(key: _quizStateKey);
+      final stateString = await storage.read(key: _quizStateKey);
       if (stateString != null && stateString.isNotEmpty) {
         final decoded = jsonDecode(stateString) as Map<String, dynamic>;
 
@@ -69,7 +63,7 @@ class QuizService {
 
   static Future<void> clearQuizState() async {
     try {
-      await _storage.delete(key: _quizStateKey);
+      await storage.delete(key: _quizStateKey);
     } catch (e) {
       Logger.log('Error clearing quiz state: $e', name: "QuizService");
     }

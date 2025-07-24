@@ -1,3 +1,4 @@
+import 'package:flipcard/constants/storage.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +6,6 @@ import 'package:flipcard/helpers/logger.dart';
 import 'package:flipcard/stores/user_store.dart';
 import 'package:flipcard/services/user_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -22,13 +22,6 @@ class _SplashScreenState extends State<SplashScreen>
   late UserStore _userStore;
   late AnimationController _controller;
   late Animation<double> _animation;
-
-  final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
 
   @override
   void initState() {
@@ -64,18 +57,18 @@ class _SplashScreenState extends State<SplashScreen>
           await _userStore.getData();
         } else if (event == AuthChangeEvent.signedOut) {
           _userStore.reset();
-          await _storage.delete(key: 'logged');
+          await storage.delete(key: 'logged');
         }
       });
 
       if (UserService.isAuthenticated) {
         await _userStore.getData();
-        await _storage.write(key: 'logged', value: 'true');
+        await storage.write(key: 'logged', value: 'true');
       }
 
       await _controller.forward();
 
-      final setupDone = await _storage.read(key: 'setup_permission');
+      final setupDone = await storage.read(key: 'setup_permission');
       if (mounted) {
         final name = setupDone == "true"
             ? (_userStore.isLogged ? '/main' : '/login')

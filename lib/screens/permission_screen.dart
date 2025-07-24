@@ -1,8 +1,8 @@
 import 'dart:math';
 
+import 'package:flipcard/constants/storage.dart';
 import 'package:flipcard/stores/user_store.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:forui/forui.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -17,12 +17,6 @@ class PermissionScreen extends StatefulWidget {
 class _PermissionScreenState extends State<PermissionScreen>
     with TickerProviderStateMixin {
   final _key = 'setup_permission';
-  final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
 
   late UserStore _userStore;
   late AnimationController _headerAnimationController;
@@ -360,7 +354,7 @@ class _PermissionScreenState extends State<PermissionScreen>
     // wait a moment then next
     Future.delayed(const Duration(seconds: 1), () {
       if (_index < _permissions.length - 1) return _next();
-      _storage.write(key: _key, value: 'true');
+      storage.write(key: _key, value: 'true');
       _navigate();
     });
   }
@@ -380,7 +374,7 @@ class _PermissionScreenState extends State<PermissionScreen>
       return;
     }
 
-    _storage.write(key: _key, value: 'true'); // mark done
+    storage.write(key: _key, value: 'true'); // mark done
     _navigate();
   }
 

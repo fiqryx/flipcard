@@ -7,6 +7,7 @@ import 'package:flipcard/services/deck_service.dart';
 import 'package:flipcard/services/quiz_result_service.dart';
 import 'package:flipcard/services/user_service.dart';
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 
 class UserStore extends ChangeNotifier {
   User? _user;
@@ -77,6 +78,19 @@ class UserStore extends ChangeNotifier {
 
       _user = user;
       _decks = decks;
+      notifyListeners();
+
+      await HomeWidget.saveWidgetData<int>('total_quiz', quiz.length);
+      await HomeWidget.saveWidgetData<String>(
+        'accuracy',
+        "${stats?.average.toStringAsFixed(1) ?? "0"}%",
+      );
+      await HomeWidget.saveWidgetData<int>('current_streak', currentStreak());
+      await HomeWidget.updateWidget(
+        name: 'StatsWidgetProvider',
+        androidName: 'StatsWidgetProvider',
+        // iOSName: 'StatsWidget',
+      );
 
       _isLogged = true;
       _error = null;
@@ -213,5 +227,86 @@ class UserStore extends ChangeNotifier {
     _isLogged = false;
     _quiz = [];
     notifyListeners();
+  }
+
+  int currentStreak() {
+    if (quiz.isEmpty) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(Duration(days: 1));
+
+    // Get unique quiz dates (only date part, not time)
+    final quizDates =
+        quiz
+            .map((quiz) {
+              final date = quiz.completedAt;
+              return DateTime(date.year, date.month, date.day);
+            })
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a)); // Sort in descending order
+
+    if (quizDates.isEmpty) return 0;
+
+    int streak = 0;
+    DateTime checkDate = today;
+
+    // Check if there's a quiz today, if not check yesterday
+    if (!quizDates.contains(today)) {
+      if (!quizDates.contains(yesterday)) {
+        return 0;
+      }
+      checkDate = yesterday;
+    }
+
+    // Count consecutive days
+    for (final date in quizDates) {
+      if (date == checkDate) {
+        streak++;
+        checkDate = checkDate.subtract(Duration(days: 1));
+      } else if (date.isBefore(checkDate)) {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
+  int longestStreak() {
+    if (quiz.isEmpty) return 0;
+
+    // Get unique quiz dates
+    final quizDates =
+        quiz
+            .map((quiz) {
+              final date = quiz.completedAt;
+              return DateTime(date.year, date.month, date.day);
+            })
+            .toSet()
+            .toList()
+          ..sort();
+
+    if (quizDates.isEmpty) return 0;
+
+    int longestStreak = 1;
+    int currentStreak = 1;
+
+    for (int i = 1; i < quizDates.length; i++) {
+      final previousDate = quizDates[i - 1];
+      final currentDate = quizDates[i];
+      final dayDifference = currentDate.difference(previousDate).inDays;
+
+      if (dayDifference == 1) {
+        currentStreak++;
+        longestStreak = currentStreak > longestStreak
+            ? currentStreak
+            : longestStreak;
+      } else {
+        currentStreak = 1;
+      }
+    }
+
+    return longestStreak;
   }
 }
