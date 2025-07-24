@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zero">0</string>
+    <string name="title">Title</string>
+    <string name="quiz_completed">Completed</string>
+    <string name="accuracy">Accuracy</string>
+    <string name="current_streak">Current Streak</string>
+    <string name="stats_widget_description">Stats overview widget</string>
+</resources>

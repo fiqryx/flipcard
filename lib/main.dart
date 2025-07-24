@@ -2,6 +2,7 @@ import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:quick_actions/quick_actions.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_fullscreen/flutter_fullscreen.dart';
 
@@ -30,6 +31,7 @@ void main() async {
   await ANotification.initialize();
   await ANotification.scheduleDaily([
     TimeOfDay(hour: 6, minute: 30),
+    TimeOfDay(hour: 16, minute: 00),
     TimeOfDay(hour: 18, minute: 30),
   ]);
 
@@ -82,7 +84,38 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
+  final _actions = QuickActions();
+
   int _current = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _actions.initialize((type) {
+      switch (type) {
+        case 'open_quiz':
+          setState(() => _current = 1);
+          break;
+        default:
+          setState(() => _current = 0);
+      }
+    });
+
+    _actions.setShortcutItems([
+      ShortcutItem(
+        type: 'open_quiz',
+        icon: 'icon_video_library_24',
+        localizedTitle: 'Quiz',
+        localizedSubtitle: 'Quickly open the quiz screen',
+      ),
+    ]);
+  }
+
+  @override
+  void dispose() {
+    _actions.clearShortcutItems();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,17 +129,17 @@ class _MainState extends State<Main> {
         style: (style) => style.copyWith(padding: EdgeInsets.only(top: 6)),
         children: [
           FBottomNavigationBarItem(
-            style: (p0) => p0.copyWith(padding: EdgeInsets.zero),
+            style: (style) => style.copyWith(padding: EdgeInsets.zero),
             icon: Icon(FIcons.layers),
             label: Text('Deck'),
           ),
           FBottomNavigationBarItem(
-            style: (p0) => p0.copyWith(padding: EdgeInsets.zero),
+            style: (style) => style.copyWith(padding: EdgeInsets.zero),
             icon: Icon(FIcons.circlePlay),
             label: Text('Quiz'),
           ),
           FBottomNavigationBarItem(
-            style: (p0) => p0.copyWith(padding: EdgeInsets.zero),
+            style: (style) => style.copyWith(padding: EdgeInsets.zero),
             icon: ClipOval(
               child: FAvatar(
                 size: 28,

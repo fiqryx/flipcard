@@ -1,26 +1,19 @@
 import 'dart:math';
 import 'dart:ui';
 import 'dart:isolate';
+import 'package:flipcard/constants/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flipcard/helpers/logger.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 @pragma('vm:entry-point')
 class ANotification {
   static ReceivePort? port;
   static ReceivedAction? action;
-
   static final _instance = AwesomeNotifications();
-  static final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
 
   static String get _portName => 'notification_action_port';
 
@@ -116,7 +109,7 @@ class ANotification {
 
   static Future<void> scheduleDaily(List<TimeOfDay> times) async {
     try {
-      final isLogged = await _storage.read(key: 'logged');
+      final isLogged = await storage.read(key: 'logged');
 
       if (isLogged != "true") {
         throw Exception('unauthorized');
@@ -124,6 +117,8 @@ class ANotification {
 
       for (var time in times) {
         final id = times.indexOf(time) + 1;
+
+        // server-side fetch for customize content remotely here...
 
         await cancel(id);
         await createSchedule(
@@ -134,6 +129,7 @@ class ANotification {
           content: NotificationContent(
             id: id,
             channelKey: 'basic_channel',
+            category: NotificationCategory.Workout,
             title: _titles[Random().nextInt(_titles.length)],
             body: _messages[Random().nextInt(_messages.length)],
             payload: {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="320dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="250dp"
+    android:minResizeHeight="40dp"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/stats_split_widget"
+    android:initialKeyguardLayout="@layout/stats_split_widget"
+    android:previewImage="@drawable/stats_widget_preview"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen|keyguard"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:description="@string/stats_widget_description"
+    android:widgetFeatures="reconfigurable">
+</appwidget-provider>

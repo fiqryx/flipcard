@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flipcard/constants/enums.dart';
 import 'package:flipcard/constants/extensions.dart';
+import 'package:flipcard/constants/storage.dart';
 import 'package:flipcard/models/user.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,12 +23,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     with TickerProviderStateMixin {
   late UserStore _userStore;
   final _picker = ImagePicker();
-  final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
 
   int _tabIndex = 0;
   bool _isLoading = false;
@@ -118,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     Navigator.pop(context);
     try {
       await UserService.signOut();
-      await _storage.delete(key: 'logged');
+      await storage.delete(key: 'logged');
       if (mounted) {
         Navigator.of(
           context,
@@ -591,8 +585,8 @@ class _ProfileStatisticsGrid extends StatelessWidget {
     final totalCards = userStore.user?.totalCards ?? 0;
     final totalQuizzes = userStore.quiz.length;
     final accuracy = userStore.stats?.average ?? 0;
-    final currentStreak = _calculateCurrentStreak();
-    final longestStreak = _calculateLongestStreak();
+    final currentStreak = userStore.currentStreak();
+    final longestStreak = userStore.longestStreak();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,87 +643,6 @@ class _ProfileStatisticsGrid extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  int _calculateCurrentStreak() {
-    if (userStore.quiz.isEmpty) return 0;
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(Duration(days: 1));
-
-    // Get unique quiz dates (only date part, not time)
-    final quizDates =
-        userStore.quiz
-            .map((quiz) {
-              final date = quiz.completedAt;
-              return DateTime(date.year, date.month, date.day);
-            })
-            .toSet()
-            .toList()
-          ..sort((a, b) => b.compareTo(a)); // Sort in descending order
-
-    if (quizDates.isEmpty) return 0;
-
-    int streak = 0;
-    DateTime checkDate = today;
-
-    // Check if there's a quiz today, if not check yesterday
-    if (!quizDates.contains(today)) {
-      if (!quizDates.contains(yesterday)) {
-        return 0;
-      }
-      checkDate = yesterday;
-    }
-
-    // Count consecutive days
-    for (final date in quizDates) {
-      if (date == checkDate) {
-        streak++;
-        checkDate = checkDate.subtract(Duration(days: 1));
-      } else if (date.isBefore(checkDate)) {
-        break;
-      }
-    }
-
-    return streak;
-  }
-
-  int _calculateLongestStreak() {
-    if (userStore.quiz.isEmpty) return 0;
-
-    // Get unique quiz dates
-    final quizDates =
-        userStore.quiz
-            .map((quiz) {
-              final date = quiz.completedAt;
-              return DateTime(date.year, date.month, date.day);
-            })
-            .toSet()
-            .toList()
-          ..sort();
-
-    if (quizDates.isEmpty) return 0;
-
-    int longestStreak = 1;
-    int currentStreak = 1;
-
-    for (int i = 1; i < quizDates.length; i++) {
-      final previousDate = quizDates[i - 1];
-      final currentDate = quizDates[i];
-      final dayDifference = currentDate.difference(previousDate).inDays;
-
-      if (dayDifference == 1) {
-        currentStreak++;
-        longestStreak = currentStreak > longestStreak
-            ? currentStreak
-            : longestStreak;
-      } else {
-        currentStreak = 1;
-      }
-    }
-
-    return longestStreak;
   }
 }
 
