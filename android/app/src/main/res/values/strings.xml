@@ -5,5 +5,6 @@
     <string name="quiz_completed">Completed</string>
     <string name="accuracy">Accuracy</string>
     <string name="current_streak">Current Streak</string>
-    <string name="stats_widget_description">Stats overview widget</string>
+    <string name="stats_widget_label">Quick stats</string>
+    <string name="stats_widget_description">Quickly showing stats overview</string>
 </resources>

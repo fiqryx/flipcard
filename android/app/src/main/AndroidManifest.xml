@@ -68,6 +68,7 @@
         </receiver>
 
         <receiver
+            android:label="@string/stats_widget_label"
             android:name=".StatsWidgetProvider"
             android:exported="true">
             <intent-filter>

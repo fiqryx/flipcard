@@ -2,7 +2,7 @@
 const appName = 'FlipCard';
 
 /// build version
-const appVersion = '1.1.5';
+const appVersion = '1.1.6';
 
 /// supabase url
 const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
