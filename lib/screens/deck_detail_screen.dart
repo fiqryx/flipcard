@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flipcard/models/voicer.dart';
 import 'package:flipcard/widgets/deck_sheet.dart';
 import 'package:flipcard/widgets/expandable_fab.dart';
 import 'package:forui/forui.dart';
@@ -9,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flipcard/models/deck.dart';
+import 'package:flipcard/helpers/speech.dart';
 import 'package:flipcard/models/language.dart';
 import 'package:flipcard/models/flashcard.dart';
 import 'package:flipcard/stores/user_store.dart';
@@ -27,12 +29,15 @@ class DeckDetailsScreen extends StatefulWidget {
 }
 
 class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
+  late Speech _speech;
   late UserStore _userStore;
+
   bool _isLoading = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _speech = Provider.of<Speech>(context);
     _userStore = Provider.of<UserStore>(context);
   }
 
@@ -264,6 +269,18 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
     }
   }
 
+  Future<void> _playSound(FlashCard card) async {
+    final locale = widget.deck.frontLanguage;
+    if (_speech.isSpeaking) await _speech.stopSpeaking();
+    await _speech.startSpeaking(
+      card.front,
+      voicer: Voicer(
+        name: '${Language.findByLocale(locale).code}-language',
+        locale: locale,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
@@ -307,6 +324,7 @@ class _DeckDetailsScreenState extends State<DeckDetailsScreen> {
                   : _CardListView(
                       cards: widget.deck.cards,
                       onEdit: _editCard,
+                      onPlay: _playSound,
                       onDelete: _deleteCard,
                     ),
             ),
@@ -429,11 +447,13 @@ class _EmptyDeckState extends StatelessWidget {
 
 class _CardListView extends StatelessWidget {
   final List<FlashCard> cards;
+  final Function(FlashCard) onPlay;
   final Function(FlashCard) onEdit;
   final Function(FlashCard) onDelete;
 
   const _CardListView({
     required this.cards,
+    required this.onPlay,
     required this.onEdit,
     required this.onDelete,
   });
@@ -448,6 +468,7 @@ class _CardListView extends StatelessWidget {
         final card = cards[index];
         return _FlashCardItem(
           card: card,
+          onPlay: () => onPlay(card),
           onEdit: () => onEdit(card),
           onDelete: () => onDelete(card),
         );
@@ -458,6 +479,7 @@ class _CardListView extends StatelessWidget {
 
 class _FlashCardItem extends StatelessWidget {
   final FlashCard card;
+  final VoidCallback? onPlay;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -465,6 +487,7 @@ class _FlashCardItem extends StatelessWidget {
     required this.card,
     required this.onEdit,
     required this.onDelete,
+    this.onPlay,
   });
 
   @override
@@ -486,7 +509,19 @@ class _FlashCardItem extends StatelessWidget {
         collapsedShape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
-        title: Text(card.front, maxLines: 2, overflow: TextOverflow.ellipsis),
+        leading: onPlay != null
+            ? FButton.icon(
+                onPress: onPlay,
+                style: FButtonStyle.ghost(),
+                child: Icon(FIcons.volume2),
+              )
+            : null,
+        title: Text(
+          card.front,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: theme.typography.sm,
+        ),
         subtitle: card.description != null
             ? Text(
                 card.description!,
