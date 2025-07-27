@@ -374,6 +374,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                           children: [
                             FTile(
+                              prefix: Icon(FIcons.user),
                               title: const Text('Name'),
                               details: Text(user.name),
                               suffix: Icon(FIcons.chevronRight),
@@ -395,6 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                           children: [
                             FTile(
+                              prefix: Icon(FIcons.venusAndMars),
                               title: const Text('Gender'),
                               details: Text(user.gender?.capitalize() ?? ''),
                               suffix: Icon(FIcons.chevronRight),
@@ -413,6 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               ),
                             ),
                             FTile(
+                              prefix: Icon(FIcons.calendar),
                               title: const Text('Date of birth'),
                               details: Text(user.birthDate?.format() ?? ''),
                               suffix: Icon(FIcons.chevronRight),
@@ -434,6 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                           children: [
                             FTile(
+                              prefix: Icon(FIcons.phone),
                               title: const Text('Phone number'),
                               details: Text(user.phone ?? ''),
                               suffix: Icon(FIcons.chevronRight),
@@ -449,6 +453,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               ),
                             ),
                             FTile(
+                              prefix: Icon(FIcons.mail),
                               enabled: provider == "email",
                               title: const Text('Email'),
                               details: Text(user.email),
@@ -472,6 +477,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           children: [
                             if (provider == 'email')
                               FTile(
+                                prefix: Icon(FIcons.lockKeyhole),
                                 title: Text('Change Password'),
                                 suffix: Icon(FIcons.chevronRight),
                                 onPress: () => _showEditSheet(
@@ -484,6 +490,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             if (provider != 'email')
                               FTile(
                                 enabled: false,
+                                prefix: Icon(FIcons.userLock),
                                 title: Text('Account type'),
                                 details: Text(provider.capitalize()),
                                 suffix: Icon(FIcons.chevronRight),
