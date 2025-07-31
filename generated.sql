@@ -7,6 +7,7 @@ create table public.user_profiles (
    gender text,
    phone text,
    birth_date date,
+   embergems integer default 0,
    total_decks integer default 0,
    total_cards integer default 0,
    shuffle boolean not null default true,
@@ -60,3 +61,12 @@ CREATE TABLE public.quiz_results (
   CONSTRAINT quiz_results_deck_id_fkey FOREIGN KEY (deck_id) REFERENCES public.decks(id),
   CONSTRAINT quiz_results_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
+
+create or replace function increment_gems(user_id uuid, gems int)
+returns bigint as $$
+  update user_profiles
+  set embergems = embergems + gems,
+      updated_at = now()
+  where user_id = $1
+  returning embergems;
+$$ language sql volatile;

@@ -78,20 +78,6 @@ class UserStore extends ChangeNotifier {
 
       _user = user;
       _decks = decks;
-      notifyListeners();
-
-      await HomeWidget.saveWidgetData<int>('total_quiz', quiz.length);
-      await HomeWidget.saveWidgetData<String>(
-        'accuracy',
-        "${stats?.average.toStringAsFixed(1) ?? "0"}%",
-      );
-      await HomeWidget.saveWidgetData<int>('current_streak', currentStreak());
-      await HomeWidget.updateWidget(
-        name: 'StatsWidgetProvider',
-        androidName: 'StatsWidgetProvider',
-        // iOSName: 'StatsWidget',
-      );
-
       _isLogged = true;
       _error = null;
     } catch (e) {
@@ -101,10 +87,11 @@ class UserStore extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      updateWidget();
     }
   }
 
-  Future<void> updateUser(User? updated) async {
+  updateUser(User? updated) {
     if (updated == null || !UserService.isAuthenticated) {
       _error = 'Invalid user data or not authenticated';
       notifyListeners();
@@ -135,15 +122,12 @@ class UserStore extends ChangeNotifier {
         totalCards: totalCards,
       );
 
-      Logger.log(
-        'decks: $totalDecks, cards: $totalCards',
-        name: 'updateUserStats',
-      );
+      _log('decks: $totalDecks, cards: $totalCards');
 
       _error = null;
     } catch (e) {
       _error = 'Failed to update user stats: ${e.toString()}';
-      Logger.log('Error updating user stats: $e', name: "USER_STORE");
+      _log('Error updating user stats: $e');
     }
   }
 
@@ -161,10 +145,28 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to update decks: ${e.toString()}';
-      Logger.log('Error updating decks: $e', name: "USER_STORE");
+      _log('Error updating decks: $e');
     }
 
     notifyListeners();
+  }
+
+  void updateWidget() async {
+    try {
+      await HomeWidget.saveWidgetData<int>('total_quiz', quiz.length);
+      await HomeWidget.saveWidgetData<String>(
+        'accuracy',
+        "${stats?.average.toStringAsFixed(1) ?? 0}%",
+      );
+      await HomeWidget.saveWidgetData<int>('current_streak', currentStreak());
+      await HomeWidget.updateWidget(
+        name: 'StatsWidgetProvider',
+        androidName: 'StatsWidgetProvider',
+        // iOSName: 'StatsWidget', // coming soon
+      );
+    } catch (e) {
+      _log('Failed update widget');
+    }
   }
 
   Future<void> addDeck(Deck deck) async {
@@ -188,7 +190,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to add deck: ${e.toString()}';
-      Logger.log('Error adding deck: $e', name: "USER_STORE");
+      _log('Error adding deck: $e');
     }
 
     notifyListeners();
@@ -208,7 +210,7 @@ class UserStore extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to delete deck: ${e.toString()}';
-      Logger.log('Error deleting deck: $e', name: "USER_STORE");
+      _log('Error deleting deck: $e');
     }
 
     notifyListeners();
@@ -217,6 +219,7 @@ class UserStore extends ChangeNotifier {
   void addQuiz(QuizResult value) {
     quiz.insert(0, value);
     notifyListeners();
+    updateWidget();
   }
 
   void reset() {
@@ -308,5 +311,9 @@ class UserStore extends ChangeNotifier {
     }
 
     return longestStreak;
+  }
+
+  void _log(String message) {
+    Logger.log(message, name: "USER_STORE");
   }
 }

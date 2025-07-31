@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flipcard/constants/storage.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:flipcard/models/deck.dart';
-import 'package:flipcard/models/flashcard.dart';
+import 'package:flipcard/widgets/badge.dart';
 import 'package:flipcard/constants/enums.dart';
 import 'package:flipcard/widgets/app_bar.dart';
-import 'package:flipcard/widgets/badge.dart';
-import 'package:flipcard/widgets/button_group.dart';
-import 'package:flipcard/widgets/deck_sheet.dart';
-import 'package:flipcard/widgets/expandable_fab.dart';
+import 'package:flipcard/models/flashcard.dart';
+import 'package:flipcard/constants/storage.dart';
 import 'package:flipcard/stores/user_store.dart';
+import 'package:flipcard/widgets/deck_sheet.dart';
+import 'package:flipcard/widgets/button_group.dart';
+import 'package:flipcard/widgets/expandable_fab.dart';
 import 'package:flipcard/screens/deck_detail_screen.dart';
 
 class DeckScreen extends StatefulWidget {
@@ -484,7 +484,6 @@ class _DeckGridCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           FCard(
-            // image: Icon(Icons.quiz, size: 24, color: colors.mutedForeground),
             title: Text(
               deck.name,
               maxLines: 1,

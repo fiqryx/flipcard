@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flipcard/helpers/ad_mob.dart';
 import 'package:flipcard/helpers/speech.dart';
 import 'package:flipcard/models/language.dart';
 import 'package:flipcard/models/voicer.dart';
@@ -282,6 +283,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       if (mounted) {
         confetti.kill();
         Navigator.pop(context, 'completed');
+        if (AdMob.isReady(AdType.interstitial)) {
+          AdMob.show(AdType.interstitial);
+        }
       }
     });
   }

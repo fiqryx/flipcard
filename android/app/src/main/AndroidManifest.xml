@@ -81,6 +81,9 @@
 
         <meta-data android:name="flutterEmbedding" android:value="2" />
         <meta-data android:name="android.app.fullscreen" android:value="true" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3411797729179357~2799814262" />
     </application>
     <queries>
         <intent>
