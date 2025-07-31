@@ -7,6 +7,7 @@ class User {
   String? gender;
   String? phone;
   DateTime? birthDate;
+  int embergems;
   int totalDecks;
   int totalCards;
   DateTime? createdAt;
@@ -21,6 +22,7 @@ class User {
     this.gender,
     this.phone,
     this.birthDate,
+    this.embergems = 0,
     this.totalDecks = 0,
     this.totalCards = 0,
     this.createdAt,
@@ -34,6 +36,7 @@ class User {
     'gender': gender,
     'phone': phone,
     'birth_date': birthDate?.toIso8601String(),
+    'embergems': embergems,
     'total_decks': totalDecks,
     'total_cards': totalCards,
     'created_at': createdAt?.toIso8601String(),
@@ -51,6 +54,7 @@ class User {
     birthDate: json['birth_date'] != null
         ? DateTime.tryParse(json['birth_date'].toString())
         : null,
+    embergems: json['embergems'] ?? 0,
     totalDecks: json['total_decks'] ?? 0,
     totalCards: json['total_cards'] ?? 0,
     createdAt: json['created_at'] != null
@@ -70,6 +74,7 @@ class User {
     String? gender,
     String? phone,
     DateTime? birthDate,
+    int? embergems,
     int? totalDecks,
     int? totalCards,
     DateTime? createdAt,
@@ -84,6 +89,7 @@ class User {
       gender: gender ?? this.gender,
       phone: phone ?? this.phone,
       birthDate: birthDate ?? this.birthDate,
+      embergems: embergems ?? this.embergems,
       totalDecks: totalDecks ?? this.totalDecks,
       totalCards: totalCards ?? this.totalCards,
       createdAt: createdAt ?? this.createdAt,
@@ -93,6 +99,17 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, imageUrl: $imageUrl, gender: $gender, phone: $phone, birthDate: $birthDate, totalDecks: $totalDecks, totalCards: $totalCards)';
+    return 'User('
+        'id: $id, '
+        'name: $name, '
+        'email: $email, '
+        'imageUrl: $imageUrl, '
+        'gender: $gender, '
+        'phone: $phone, '
+        'birthDate: $birthDate, '
+        'embergems: $embergems, '
+        'totalDecks: $totalDecks, '
+        'totalCards: $totalCards'
+        ')';
   }
 }

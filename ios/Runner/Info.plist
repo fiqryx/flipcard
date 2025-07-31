@@ -64,5 +64,7 @@
 		<array>
 			<string>dev.flutter.background.refresh</string>
 		</array>
+		<key>GADApplicationIdentifier</key>
+		<string>ca-app-pub-3411797729179357~4272893632</string>
 	</dict>
 </plist>

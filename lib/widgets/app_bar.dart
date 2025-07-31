@@ -1,23 +1,91 @@
+import 'package:flipcard/helpers/ad_mob.dart';
+import 'package:flipcard/helpers/logger.dart';
+import 'package:flipcard/services/user_service.dart';
+import 'package:flipcard/stores/user_store.dart';
 import 'package:forui/forui.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flipcard/widgets/badge.dart';
-import 'package:flipcard/stores/user_store.dart';
-import 'package:flipcard/screens/profile_screen.dart';
+import 'package:provider/provider.dart';
 
 class AppBarPrimary extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
   final List<Widget>? actions;
-  final bool showUser;
   final PreferredSizeWidget? bottom;
 
-  const AppBarPrimary({
-    super.key,
-    this.title,
-    this.actions,
-    this.showUser = false,
-    this.bottom,
-  });
+  const AppBarPrimary({super.key, this.title, this.actions, this.bottom});
+
+  Future<void> _earnGems(BuildContext context, UserStore userStore) async {
+    try {
+      if (!AdMob.isReady(AdType.rewarded)) return;
+      final showAd = await showFDialog(
+        context: context,
+        builder: (context, style, animation) => FDialog(
+          animation: animation,
+          direction: Axis.horizontal,
+          style: style
+              .copyWith(
+                decoration: style.decoration.copyWith(
+                  border: Border.all(color: context.theme.colors.border),
+                ),
+              )
+              .call,
+          title: const Text('Earn Embergems'),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Watch a short video to earn embergems.'),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/images/embergems.png',
+                    width: 16,
+                    height: 16,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '+3 Embergems',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            FButton(
+              mainAxisSize: MainAxisSize.min,
+              style: FButtonStyle.outline(),
+              onPress: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FButton(
+              mainAxisSize: MainAxisSize.min,
+              onPress: () => Navigator.pop(context, true),
+              suffix: Icon(FIcons.monitorPlay, size: 16),
+              child: const Text('Watch Ad'),
+            ),
+          ],
+        ),
+      );
+
+      if (showAd) {
+        await AdMob.show(
+          AdType.rewarded,
+          onEarned: (ad, reward) async {
+            Logger.log('earn reward: ${reward.amount}', name: 'EarnGems');
+            final user = userStore.user?.copyWith(
+              embergems: await UserService.addGems(reward.amount.toInt()),
+            );
+            userStore.updateUser(user);
+            AdMob.reload(AdType.rewarded);
+          },
+        );
+      }
+    } catch (e) {
+      Logger.log(e.toString(), name: 'EarnGems');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,52 +100,59 @@ class AppBarPrimary extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: colors.secondary,
       actions: [
         ...?actions,
-        if (showUser)
-          Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Row(
-              spacing: 4,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Column(
-                  spacing: 2,
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      userStore.user?.name ?? 'Guest',
-                      style: theme.typography.sm.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+        GestureDetector(
+          onTap: () => _earnGems(context, userStore),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              IconButton(
+                iconSize: 12,
+                icon: Icon(FIcons.plus),
+                onPressed: () => _earnGems(context, userStore),
+                tooltip: "Earn embergems",
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  shape: CircleBorder(),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                constraints: BoxConstraints(minWidth: 20, minHeight: 20),
+              ),
+              SizedBox(width: 2),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 100),
+                child: TBadge(
+                  maxLines: 1,
+                  label: '${userStore.user?.embergems ?? 0}',
+                  style: theme.typography.sm,
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  backgroundColor: colors.primary.withValues(alpha: 0.15),
+                ),
+              ),
+              SizedBox(width: 4),
+              Image.asset(
+                'assets/images/embergems.png',
+                width: 18,
+                height: 18,
+                frameBuilder: (ctx, child, frame, sync) {
+                  if (frame == null) {
+                    return Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colors.primary.withValues(alpha: 0.15),
                       ),
-                    ),
-                    TBadge(label: 'subscribtion'),
-                  ],
-                ),
-                IconButton(
-                  padding: EdgeInsets.all(4),
-                  tooltip: userStore.user?.name,
-                  style: IconButton.styleFrom(shape: CircleBorder()),
-                  icon: FAvatar(
-                    size: 36,
-                    style: (style) => style.copyWith(
-                      // ignore: deprecated_member_use
-                      backgroundColor: colors.mutedForeground.withOpacity(0.2),
-                      foregroundColor: colors.primaryForeground,
-                    ),
-                    image: NetworkImage(userStore.user?.imageUrl ?? ''),
-                    fallback: Icon(Icons.person),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                      child: Center(child: Icon(FIcons.loader, size: 14)),
                     );
-                  },
-                ),
-              ],
-            ),
+                  }
+                  return child;
+                },
+              ),
+            ],
           ),
+        ),
+        SizedBox(width: 8),
       ],
     );
   }

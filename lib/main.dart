@@ -6,6 +6,7 @@ import 'package:quick_actions/quick_actions.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_fullscreen/flutter_fullscreen.dart';
 
+import 'package:flipcard/helpers/ad_mob.dart';
 import 'package:flipcard/helpers/speech.dart';
 import 'package:flipcard/constants/config.dart';
 import 'package:flipcard/stores/user_store.dart';
@@ -21,18 +22,15 @@ import 'package:flipcard/helpers/awesome_notification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
 
   await FullScreen.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   await ANotification.initialize();
   await ANotification.scheduleDaily([
     TimeOfDay(hour: 6, minute: 30),
     TimeOfDay(hour: 16, minute: 00),
-    TimeOfDay(hour: 18, minute: 30),
+    TimeOfDay(hour: 19, minute: 00),
   ]);
 
   runApp(
@@ -91,6 +89,7 @@ class _MainState extends State<Main> {
   @override
   void initState() {
     super.initState();
+    AdMob.initialize();
     _actions.initialize((type) {
       switch (type) {
         case 'open_quiz':
@@ -114,6 +113,7 @@ class _MainState extends State<Main> {
   @override
   void dispose() {
     _actions.clearShortcutItems();
+    AdMob.dispose();
     super.dispose();
   }
 
@@ -123,6 +123,7 @@ class _MainState extends State<Main> {
     final userStore = Provider.of<UserStore>(context);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       bottomNavigationBar: FBottomNavigationBar(
         index: _current,
         onChange: (idx) => setState(() => _current = idx),
@@ -135,7 +136,7 @@ class _MainState extends State<Main> {
           ),
           FBottomNavigationBarItem(
             style: (style) => style.copyWith(padding: EdgeInsets.zero),
-            icon: Icon(FIcons.circlePlay),
+            icon: Icon(Icons.play_circle_outline),
             label: Text('Quiz'),
           ),
           FBottomNavigationBarItem(

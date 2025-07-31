@@ -37,6 +37,50 @@ class _QuizScreen extends State<QuizScreen> {
     _userStore = Provider.of<UserStore>(context);
   }
 
+  Future<void> _playQuiz(BuildContext context, Deck deck) async {
+    final user = _userStore.user;
+    if (user == null || user.embergems < 3) {
+      showFToast(
+        context: context,
+        alignment: FToastAlignment.topCenter,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Need '),
+            Image.asset('assets/images/embergems.png', width: 16, height: 16),
+            Text(' 3 continue', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
+      return;
+    }
+
+    UserService.addGems(-3).then((value) {
+      _userStore.updateUser(user.copyWith(embergems: value));
+    });
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QuizPlayScreen(
+          deck: deck,
+          onCompleted: (correct) => _quizCompleted(
+            deckId: deck.id,
+            correctAnswers: correct,
+            incorrectAnswers: deck.cards.length - correct,
+            timeSpentSeconds: 0,
+          ),
+        ),
+      ),
+    );
+
+    // Check if we returned from quiz without completing
+    // If so, check if there's still a saved state
+    if (result != 'completed') {
+      _checkForPreviousQuiz();
+    }
+  }
+
   Future<void> _checkForPreviousQuiz() async {
     final hasState = await QuizService.hasQuizState();
     if (hasState && mounted) {
@@ -206,32 +250,7 @@ class _QuizScreen extends State<QuizScreen> {
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final deck = filtered[index];
-
-        return _QuizDeckCard(
-          deck: deck,
-          onTap: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => QuizPlayScreen(
-                  deck: deck,
-                  onCompleted: (correct) => _quizCompleted(
-                    deckId: deck.id,
-                    correctAnswers: correct,
-                    incorrectAnswers: deck.cards.length - correct,
-                    timeSpentSeconds: 0,
-                  ),
-                ),
-              ),
-            );
-
-            // Check if we returned from quiz without completing
-            // If so, check if there's still a saved state
-            if (result != 'completed') {
-              _checkForPreviousQuiz();
-            }
-          },
-        );
+        return _QuizDeckCard(deck: deck, onTap: () => _playQuiz(context, deck));
       },
     );
   }

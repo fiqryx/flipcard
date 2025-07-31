@@ -39,6 +39,7 @@ dependencies:
   flutter_timezone: ^4.1.1
   quick_actions: ^1.1.0
   home_widget: ^0.8.0
+  google_mobile_ads: ^6.0.0
 
 dev_dependencies:
   flutter_test:

@@ -9,6 +9,8 @@ class TBadge extends StatelessWidget {
   final TextStyle? style;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
+  final int? maxLines;
+  final TextOverflow overflow;
 
   const TBadge({
     super.key,
@@ -19,6 +21,8 @@ class TBadge extends StatelessWidget {
     this.radius = 10,
     this.backgroundColor,
     this.foregroundColor,
+    this.maxLines = 1,
+    this.overflow = TextOverflow.ellipsis,
   });
 
   @override
@@ -32,8 +36,11 @@ class TBadge extends StatelessWidget {
         color: backgroundColor ?? theme.colors.primary,
         borderRadius: BorderRadius.circular(radius),
       ),
+      constraints: BoxConstraints(minWidth: 20),
       child: Text(
         label,
+        maxLines: maxLines,
+        overflow: overflow,
         style:
             style ??
             theme.typography.xs.copyWith(
