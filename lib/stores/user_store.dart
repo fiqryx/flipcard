@@ -61,6 +61,7 @@ class UserStore extends ChangeNotifier {
       return;
     }
 
+    if (_isLoading) return;
     _isLoading = true;
     _error = null;
     notifyListeners();

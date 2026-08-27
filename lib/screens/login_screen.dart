@@ -47,18 +47,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _setupAuthListener() {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      final event = data.event;
-      final session = data.session;
+      try {
+        final event = data.event;
+        final session = data.session;
 
-      if (event == AuthChangeEvent.signedIn && session != null) {
-        await _userStore.getData();
-        await storage.write(key: "logged", value: "true");
-        if (mounted) {
-          setState(() => _isLoading = false);
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil('/main', (route) => false);
+        if (event == AuthChangeEvent.signedIn && session != null) {
+          await _userStore.getData();
+          await storage.write(key: "logged", value: "true");
+          if (mounted) {
+            setState(() => _isLoading = false);
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/main', (route) => false);
+          }
         }
+      } catch (e) {
+        _showError('Sign in failed please try again');
       }
     });
   }
@@ -233,30 +237,30 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             // Sign up prompt
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 2,
-              children: [
-                Text(
-                  "Don't have an account?",
-                  style: context.theme.typography.sm.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => {
-                    Navigator.of(context).pushNamed('/register'),
-                  },
-                  child: Text(
-                    'Sign Up',
-                    style: themeOf.textTheme.bodyMedium?.copyWith(
-                      color: colors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.center,
+            //   spacing: 2,
+            //   children: [
+            //     Text(
+            //       "Don't have an account?",
+            //       style: context.theme.typography.sm.copyWith(
+            //         color: colors.mutedForeground,
+            //       ),
+            //     ),
+            //     TextButton(
+            //       onPressed: () => {
+            //         Navigator.of(context).pushNamed('/register'),
+            //       },
+            //       child: Text(
+            //         'Sign Up',
+            //         style: themeOf.textTheme.bodyMedium?.copyWith(
+            //           color: colors.primary,
+            //           fontWeight: FontWeight.bold,
+            //         ),
+            //       ),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),

@@ -38,26 +38,27 @@ class _QuizScreen extends State<QuizScreen> {
   }
 
   Future<void> _playQuiz(BuildContext context, Deck deck) async {
-    final user = _userStore.user;
-    if (user == null || user.embergems < 3) {
-      showFToast(
-        context: context,
-        alignment: FToastAlignment.topCenter,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Need '),
-            Image.asset('assets/images/embergems.png', width: 16, height: 16),
-            Text(' 3 continue', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-      );
-      return;
-    }
+    // enable to calculate embergems
+    // final user = _userStore.user;
+    // if (user == null || user.embergems < 3) {
+    //   showFToast(
+    //     context: context,
+    //     alignment: FToastAlignment.topCenter,
+    //     title: Row(
+    //       mainAxisSize: MainAxisSize.min,
+    //       children: [
+    //         Text('Need '),
+    //         Image.asset('assets/images/embergems.png', width: 16, height: 16),
+    //         Text(' 3 continue', style: TextStyle(fontWeight: FontWeight.bold)),
+    //       ],
+    //     ),
+    //   );
+    //   return;
+    // }
 
-    UserService.addGems(-3).then((value) {
-      _userStore.updateUser(user.copyWith(embergems: value));
-    });
+    // UserService.addGems(-3).then((value) {
+    //   _userStore.updateUser(user.copyWith(embergems: value));
+    // });
 
     final result = await Navigator.push(
       context,

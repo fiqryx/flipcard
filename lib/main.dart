@@ -89,7 +89,7 @@ class _MainState extends State<Main> {
   @override
   void initState() {
     super.initState();
-    AdMob.initialize();
+    // AdMob.initialize();
     _actions.initialize((type) {
       switch (type) {
         case 'open_quiz':
@@ -113,7 +113,7 @@ class _MainState extends State<Main> {
   @override
   void dispose() {
     _actions.clearShortcutItems();
-    AdMob.dispose();
+    // AdMob.dispose();
     super.dispose();
   }
 

@@ -100,58 +100,58 @@ class AppBarPrimary extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: colors.secondary,
       actions: [
         ...?actions,
-        GestureDetector(
-          onTap: () => _earnGems(context, userStore),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              IconButton(
-                iconSize: 12,
-                icon: Icon(FIcons.plus),
-                onPressed: () => _earnGems(context, userStore),
-                tooltip: "Earn embergems",
-                padding: EdgeInsets.zero,
-                style: IconButton.styleFrom(
-                  shape: CircleBorder(),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                constraints: BoxConstraints(minWidth: 20, minHeight: 20),
-              ),
-              SizedBox(width: 2),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 100),
-                child: TBadge(
-                  maxLines: 1,
-                  label: '${userStore.user?.embergems ?? 0}',
-                  style: theme.typography.sm,
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  backgroundColor: colors.primary.withValues(alpha: 0.15),
-                ),
-              ),
-              SizedBox(width: 4),
-              Image.asset(
-                'assets/images/embergems.png',
-                width: 18,
-                height: 18,
-                frameBuilder: (ctx, child, frame, sync) {
-                  if (frame == null) {
-                    return Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colors.primary.withValues(alpha: 0.15),
-                      ),
-                      child: Center(child: Icon(FIcons.loader, size: 14)),
-                    );
-                  }
-                  return child;
-                },
-              ),
-            ],
-          ),
-        ),
+        // GestureDetector(
+        //   onTap: () => _earnGems(context, userStore),
+        //   child: Row(
+        //     mainAxisSize: MainAxisSize.min,
+        //     textBaseline: TextBaseline.alphabetic,
+        //     children: [
+        //       IconButton(
+        //         iconSize: 12,
+        //         icon: Icon(FIcons.plus),
+        //         onPressed: () => _earnGems(context, userStore),
+        //         tooltip: "Earn embergems",
+        //         padding: EdgeInsets.zero,
+        //         style: IconButton.styleFrom(
+        //           shape: CircleBorder(),
+        //           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        //         ),
+        //         constraints: BoxConstraints(minWidth: 20, minHeight: 20),
+        //       ),
+        //       SizedBox(width: 2),
+        //       ConstrainedBox(
+        //         constraints: BoxConstraints(maxWidth: 100),
+        //         child: TBadge(
+        //           maxLines: 1,
+        //           label: '${userStore.user?.embergems ?? 0}',
+        //           style: theme.typography.sm,
+        //           padding: EdgeInsets.symmetric(horizontal: 12),
+        //           backgroundColor: colors.primary.withValues(alpha: 0.15),
+        //         ),
+        //       ),
+        //       SizedBox(width: 4),
+        //       Image.asset(
+        //         'assets/images/embergems.png',
+        //         width: 18,
+        //         height: 18,
+        //         frameBuilder: (ctx, child, frame, sync) {
+        //           if (frame == null) {
+        //             return Container(
+        //               width: 22,
+        //               height: 22,
+        //               decoration: BoxDecoration(
+        //                 shape: BoxShape.circle,
+        //                 color: colors.primary.withValues(alpha: 0.15),
+        //               ),
+        //               child: Center(child: Icon(FIcons.loader, size: 14)),
+        //             );
+        //           }
+        //           return child;
+        //         },
+        //       ),
+        //     ],
+        //   ),
+        // ),
         SizedBox(width: 8),
       ],
     );

@@ -70,3 +70,66 @@ returns bigint as $$
   where user_id = $1
   returning embergems;
 $$ language sql volatile;
+
+-- ==============================================================================
+-- 1. POLICIES UNTUK USER_PROFILES
+-- ==============================================================================
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "User bisa insert profil mereka sendiri" 
+ON public.user_profiles FOR INSERT TO authenticated 
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "User bisa lihat profil mereka sendiri" 
+ON public.user_profiles FOR SELECT TO authenticated 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "User bisa update profil mereka sendiri" 
+ON public.user_profiles FOR UPDATE TO authenticated 
+USING (auth.uid() = user_id);
+
+
+-- ==============================================================================
+-- 2. POLICIES UNTUK DECKS (Koleksi Kartu)
+-- ==============================================================================
+ALTER TABLE public.decks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "User punya hak penuh atas deck mereka" 
+ON public.decks FOR ALL TO authenticated 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+
+-- ==============================================================================
+-- 3. POLICIES UNTUK CARDS (Isi Kartu di dalam Deck)
+-- Belajar dari relasi: User hanya bisa utak-atik kartu jika dia pemilik deck tersebut
+-- ==============================================================================
+ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "User hanya bisa akses kartu di dalam deck miliknya" 
+ON public.cards FOR ALL TO authenticated 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.decks 
+    WHERE public.decks.id = public.cards.deck_id 
+    AND public.decks.user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.decks 
+    WHERE public.decks.id = public.cards.deck_id 
+    AND public.decks.user_id = auth.uid()
+  )
+);
+
+
+-- ==============================================================================
+-- 4. POLICIES UNTUK QUIZ_RESULTS (Hasil Skor Kuis)
+-- ==============================================================================
+ALTER TABLE public.quiz_results ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "User punya hak penuh atas hasil kuis mereka" 
+ON public.quiz_results FOR ALL TO authenticated 
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
